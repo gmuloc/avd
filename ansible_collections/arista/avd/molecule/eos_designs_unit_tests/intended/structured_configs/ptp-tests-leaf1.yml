@@ -243,7 +243,6 @@ vlans:
     name: VLAN11
 ip_igmp_snooping:
   globally_enabled: true
-ip_virtual_router_mac_address: 00:1c:73:00:00:99
 vlan_interfaces:
   Vlan11:
     tenant: PTP
