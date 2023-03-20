@@ -24,45 +24,30 @@ jobs:
         id: filter
         with:
           filters: |
+            workflow:
+              - '.github/workflows/pull-request-management.yml'
             eos_design:
-              - 'ansible_collections/arista/avd/roles/eos_designs/*'
-              - 'ansible_collections/arista/avd/roles/eos_designs/**/*'
-              - '.github/workflows/pull-request-management.yml'
-              - 'ansible_collections/arista/avd/molecule/*'
-              - 'ansible_collections/arista/avd/molecule/**/*'
-              - '!ansible_collections/arista/avd/roles/eos_config_deploy_cvp/*'
-              - '!ansible_collections/arista/avd/roles/eos_config_deploy_cvp/**/*'
-              - '!ansible_collections/arista/avd/molecule/cvp_configlet_upload/*'
-              - '!ansible_collections/arista/avd/molecule/cvp_configlet_upload/**/*'
+              - 'ansible_collections/arista/avd/roles/eos_designs/**'
+              - 'ansible_collections/arista/avd/molecule/eos_designs_*/**'
             config_gen:
-              - 'ansible_collections/arista/avd/roles/eos_cli_config_gen/*'
-              - 'ansible_collections/arista/avd/roles/eos_cli_config_gen/**/*'
-              - '.github/workflows/pull-request-management.yml'
-              - 'ansible_collections/arista/avd/molecule/eos_cli_config_gen*/*'
-              - 'ansible_collections/arista/avd/molecule/eos_cli_config_gen*/**/*'
+              - 'ansible_collections/arista/avd/roles/eos_cli_config_gen/**'
+              - 'ansible_collections/arista/avd/molecule/eos_cli_config_gen*/**'
             cloudvision:
               - 'ansible_collections/arista/avd/roles/eos_config_deploy_cvp/*'
               - 'ansible_collections/arista/avd/roles/eos_config_deploy_cvp/**/*'
               - 'ansible_collections/arista/avd/molecule/cvp_configlet_upload/*'
               - 'ansible_collections/arista/avd/molecule/cvp_configlet_upload/**/*'
-              - '.github/workflows/pull-request-management.yml'
             dhcp:
-              - 'ansible_collections/arista/avd/roles/dhcp_provisioner/*'
-              - 'ansible_collections/arista/avd/roles/dhcp_provisioner/**/*'
-              - '.github/workflows/pull-request-management.yml'
+              - 'ansible_collections/arista/avd/roles/dhcp_provisioner/**'
             plugins:
-              - 'ansible_collections/arista/avd/plugins/filter/**'
-              - 'ansible_collections/arista/avd/plugins/test/**'
+              - 'ansible_collections/arista/avd/plugins/**'
             requirements:
               - 'ansible_collections/arista/avd/requirements.txt'
               - 'ansible_collections/arista/avd/requirements-dev.txt'
               - 'ansible_collections/arista/avd/meta/runtime.yml'
-              - '.github/workflows/pull-request-management.yml'
             docs:
-              - '.github/workflows/pull-request-management.yml'
               - 'mkdocs.yml'
               - 'ansible_collections/arista/avd/docs/**'
-              - 'ansible_collections/arista/avd/roles/**/*.md'
               - 'ansible_collections/arista/avd/**/*.md'
               - 'ansible_collections/arista/avd/README.md'
               - 'ansible_collections/arista/avd/**/*.schema.yml'
