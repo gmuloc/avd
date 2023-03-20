@@ -23,28 +23,45 @@ jobs:
       - uses: dorny/paths-filter@v2
         id: filter
         with:
+          # TODO - these filters DO NOT capture changes to:
+          # * roles/eos_config_deploy_eapi
+          # * roles/eos_snapshot
+          # * roles/eos_validate_state
+          # * playbooks
+          # * molecule upgrade scenarios
           filters: |
+            # Capture PR management workflow change
             workflow:
               - '.github/workflows/pull-request-management.yml'
+            # Capture eos_designs changes
             eos_design:
               - 'ansible_collections/arista/avd/roles/eos_designs/**'
+              - 'ansible_collections/arista/examples/**'
               - 'ansible_collections/arista/avd/molecule/eos_designs_*/**'
+              - 'ansible_collections/arista/avd/molecule/evpn_underlays_*/**'
+            # Capture any eos_cli_config_gen change
             config_gen:
               - 'ansible_collections/arista/avd/roles/eos_cli_config_gen/**'
               - 'ansible_collections/arista/avd/molecule/eos_cli_config_gen*/**'
+            # Capture CVP changes
             cloudvision:
-              - 'ansible_collections/arista/avd/roles/eos_config_deploy_cvp/*'
-              - 'ansible_collections/arista/avd/roles/eos_config_deploy_cvp/**/*'
-              - 'ansible_collections/arista/avd/molecule/cvp_configlet_upload/*'
-              - 'ansible_collections/arista/avd/molecule/cvp_configlet_upload/**/*'
+              - 'ansible_collections/arista/avd/roles/eos_config_deploy_cvp/**'
+              - 'ansible_collections/arista/avd/molecule/cvp_configlet_upload/**'
+            # Capture any DHCP change
             dhcp:
               - 'ansible_collections/arista/avd/roles/dhcp_provisioner/**'
+              - 'ansible_collections/arista/avd/molecule/dhcp_*/**'
+            # Capture any plugins change and their tests
             plugins:
               - 'ansible_collections/arista/avd/plugins/**'
+              - 'ansible_collections/arista/avd/tests/**'
+            # Capture any requirement change
             requirements:
               - 'ansible_collections/arista/avd/requirements.txt'
               - 'ansible_collections/arista/avd/requirements-dev.txt'
               - 'ansible_collections/arista/avd/meta/runtime.yml'
+              - 'ansible_collections/arista/avd/collections.yml'
+            # Capture any documentation change
             docs:
               - 'mkdocs.yml'
               - 'ansible_collections/arista/avd/docs/**'
@@ -53,19 +70,30 @@ jobs:
               - 'ansible_collections/arista/avd/**/*.schema.yml'
   # ----------------------------------- #
   # Pre Commit code validation
+  # Always run
   # ----------------------------------- #
   pre_commit:
     name: Run pre-commit validation hooks
     runs-on: ubuntu-latest
     container: avdteam/base:3.8-v2.0
-    needs: file-changes
-    if: needs.file-changes.outputs.eos_design == 'true' || needs.file-changes.outputs.config_gen == 'true' || needs.file-changes.outputs.requirements == 'true'
     steps:
       - uses: actions/checkout@v3
+      # Need to install ansible for the schemas hook
+      # Would be better to remove this later so we only really need
+      # pre-commit
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: Install requirements
         run: |
           pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
           pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
+      - name: Retrieve pre-commit environment from cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit/
+          key: pre-commit-4|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit
         run: |
           pre-commit run --all-files --color always
