@@ -86,9 +86,10 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: Install requirements
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
       - name: Retrieve pre-commit environment from cache
         uses: actions/cache@v3
         with:
@@ -146,9 +147,10 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
       - name: 'Install Python requirements'
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
 
   # ----------------------------------- #
   # EOS CLI CONFIG GEN MOLECULE
@@ -318,13 +320,13 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: 'Install Python requirements'
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
       - name: 'Run ansible-test sanity'
-        run: |
-          cd ansible_collections/arista/avd/
-          ansible-test sanity --color yes -v --requirements --docker
+        working-directory: ansible_collections/arista/avd/
+        run: ansible-test sanity --color yes -v --requirements --docker
 
   ansible_test_units:
     name: Run ansible-test units test cases
@@ -343,13 +345,13 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: 'Install Python requirements'
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
       - name: 'Run ansible-test units test cases'
-        run: |
-          cd ansible_collections/arista/avd/
-          ansible-test units --requirements --docker -vv
+        working-directory: ansible_collections/arista/avd/
+        run: ansible-test units --requirements --docker -vv
 
   ansible_test_integration:
     name: Run ansible-test integration test cases
@@ -368,13 +370,13 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: 'Install Python requirements'
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
       - name: 'Run ansible-test integration test cases'
-        run: |
-          cd ansible_collections/arista/avd/
-          ansible-test integration --requirements --docker -vv
+        working-directory: ansible_collections/arista/avd/
+        run: ansible-test integration --requirements --docker -vv
 
   ansible_lint:
     name: Run ansible-lint test case
@@ -397,14 +399,14 @@ jobs:
           path: ~/.ansible/collections
           key: ${{ hashFiles('ansible_collections/arista/avd/collections.yml') }}
       - name: 'Install Python & Ansible requirements'
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
-          ansible-galaxy collection install -r ansible_collections/arista/avd/collections.yml
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
+          ansible-galaxy collection install -r collections.yml
       - name: 'Run ansible-lint test cases'
-        run: |
-          cd ansible_collections/arista/avd/
-          ansible-lint --force-color --strict -v
+        working-directory: ansible_collections/arista/avd/
+        run: ansible-lint --force-color --strict -v
 
   # ----------------------------------- #
   # Galaxy Importer
@@ -423,9 +425,10 @@ jobs:
           path: ~/.cache/pip
           key: ${{ hashFiles('ansible_collections/arista/avd/requirements.txt') }}-${{ hashFiles('ansible_collections/arista/avd/requirements-dev.txt') }}
       - name: Install requirements
+        working-directory: ansible_collections/arista/avd/
         run: |
-          pip install -r ansible_collections/arista/avd/requirements.txt --upgrade
-          pip install -r ansible_collections/arista/avd/requirements-dev.txt --upgrade
+          pip install -r requirements.txt --upgrade
+          pip install -r requirements-dev.txt --upgrade
       - name: 'Build ansible package'
         run: make collection-build
       - name: 'Run galaxy-importer checks'
