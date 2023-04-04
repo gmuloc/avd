@@ -3963,8 +3963,9 @@ keys:
                 ip_access_group:
                   type: str
                   description: ACL name
-          grpc_tunnel:
+          grpc_tunnels:
             type: list
+            primary_key: name
             items:
               type: dict
               keys:
@@ -3982,7 +3983,7 @@ keys:
                   description: gNMI SSL profile name
                 vrf:
                   type: str
-                  description: VRF name is optional
+                  description: VRF name
                 destination:
                   type: dict
                   keys:
@@ -3999,7 +4000,7 @@ keys:
                 local_interface:
                   type: dict
                   keys:
-                    interface:
+                    name:
                       type: str
                       description: Interface name
                     port:
