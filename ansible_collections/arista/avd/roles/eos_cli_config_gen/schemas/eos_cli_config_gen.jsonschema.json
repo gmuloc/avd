@@ -6036,6 +6036,10 @@
                         "title": "Port"
                       }
                     },
+                    "required": [
+                      "address",
+                      "port"
+                    ],
                     "additionalProperties": false,
                     "patternProperties": {
                       "^_.+$": {}
@@ -6058,6 +6062,10 @@
                         "title": "Port"
                       }
                     },
+                    "required": [
+                      "name",
+                      "port"
+                    ],
                     "additionalProperties": false,
                     "patternProperties": {
                       "^_.+$": {}
