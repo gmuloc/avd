@@ -130,6 +130,44 @@ DEFAULT_NODE_TYPE_KEYS = {
             "uplink_type": "port-channel",
         },
     ],
+    "wan": [
+        {
+            "key": "pathfinder",
+            "type": "pathfinder",
+            "wan": True,
+            "default_evpn_role": "server",
+        },
+        {
+            "key": "rr",
+            "type": "rr",
+            "wan": True,
+            "default_evpn_role": "server",
+        },
+        {
+            "key": "edge",
+            "type": "edge",
+            "wan": True,
+            "connected_endpoints": True,
+            "default_evpn_role": "client",
+            "mlag_support": True,
+            "network_services": {
+                "l2": True,
+                "l3": True,
+            },
+        },
+        {
+            "key": "transit",
+            "type": "transit",
+            "wan": True,
+            "connected_endpoints": True,
+            "default_evpn_role": "client",
+            "mlag_support": True,
+            "network_services": {
+                "l2": True,
+                "l3": True,
+            },
+        },
+    ],
 }
 
 

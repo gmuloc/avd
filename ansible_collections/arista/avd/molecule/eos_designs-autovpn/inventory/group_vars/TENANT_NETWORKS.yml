@@ -1,0 +1,24 @@
+---
+tenants:
+  - name: SE_LAB
+    vrfs:
+      - name: SE_LAB
+        vrf_vni: 201
+        l3_interfaces:
+          - description: Client LAN Network
+            enabled: true
+            # TODO can we avoid such repetition ?
+            interfaces:
+              - Ethernet4
+              - Ethernet4
+              - Ethernet4
+            ip_addresses:
+              - 192.168.1.1/24
+              - 192.168.2.1/24
+              - 192.168.3.1/24
+            nodes:
+              - edge1
+              - edge2
+              - edge3
+      - name: default
+        vrf_vni: 101

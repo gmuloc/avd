@@ -12,11 +12,12 @@ from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
 from .mlag import MlagMixin
 from .overlay import OverlayMixin
 from .short_esi import ShortEsiMixin
+from .underlay import UnderlayMixin
 from .uplinks import UplinksMixin
 from .vlans import VlansMixin
 
 
-class EosDesignsFacts(AvdFacts, MlagMixin, ShortEsiMixin, OverlayMixin, UplinksMixin, VlansMixin):
+class EosDesignsFacts(AvdFacts, MlagMixin, ShortEsiMixin, OverlayMixin, UnderlayMixin, UplinksMixin, VlansMixin):
     """
     `EosDesignsFacts` is based on `AvdFacts`, so make sure to read the description there first.
 

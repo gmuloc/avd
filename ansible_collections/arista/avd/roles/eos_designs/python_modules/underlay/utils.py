@@ -119,3 +119,45 @@ class UtilsMixin:
     @cached_property
     def _uplinks(self) -> list:
         return get(self._hostvars, "switch.uplinks")
+
+    @cached_property
+    def _wan_route_reflectors(self) -> dict:
+        """
+        TODO - trying to get the info for the RR - public_ip, name, ...
+        """
+        wan_route_reflectors = {}
+
+        for route_reflector in natural_sort(get(self._hostvars, "switch.wan_route_reflectors", default=[])):
+            if route_reflector == self.shared_utils.hostname:
+                continue
+
+            peer_facts = self.shared_utils.get_peer_facts(route_reflector, required=True)
+
+            self._append_peer(wan_route_reflectors, route_reflector, peer_facts)
+
+        return wan_route_reflectors
+
+    def _append_peer(self, peers_dict: dict, peer_name: str, peer_facts: dict) -> None:
+        """
+        Retieve bgp_as and "underlay.peering_address" from peer_facts and append
+        a new peer to peers_dict
+        {
+            peer_name: {
+                "bgp_as": bgp_as,
+                # "ip_address": overlay.peering_address,
+                "transports": underlay.wan_transports,
+            }
+        }
+        """
+        bgp_as = peer_facts.get("bgp_as")
+        peers_dict[peer_name] = {
+            "bgp_as": str(bgp_as) if bgp_as is not None else None,
+            # "ip_address": get(
+            #     peer_facts,
+            #     "overlay.peering_address",
+            #     required=True,
+            #     org_key=f"switch.overlay.peering_address for {peer_name}",
+            # ),
+            "router_id": peer_facts.get("router_id"),
+            "transports": peer_facts.get("wan_transports"),
+        }

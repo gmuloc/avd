@@ -41,6 +41,9 @@ class AvdInterfaceDescriptions(AvdFacts, UtilsMixin):
         if link_type == "underlay_l2":
             return f"{link_peer}_{link_peer_interface}"
 
+        if link_type == "underlay_wan":
+            return f"WAN_{link_peer}"
+
         return ""
 
     def underlay_port_channel_interfaces(

@@ -125,3 +125,12 @@ class NodeTypeMixin:
         """
         default_vtep = get(self.node_type_key_data, "vtep")
         return get(self.switch_data_combined, "vtep", default=default_vtep) is True
+
+    @cached_property
+    def wan(self: SharedUtils) -> bool:
+        """
+        mpls_lsr set based on
+        node_type_keys.<node_type_key>.wan
+        """
+        return get(self.node_type_key_data, "wan", default=False)
+

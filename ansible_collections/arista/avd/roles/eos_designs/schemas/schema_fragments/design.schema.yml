@@ -19,4 +19,5 @@ keys:
           - l3ls-evpn
           - mpls
           - l2ls
+          - wan
         default: "l3ls-evpn"

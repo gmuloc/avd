@@ -168,3 +168,41 @@ keys:
           new_key: bgp_peer_groups.evpn_overlay_peers
           removed: true
           remove_in_version: "4.0.0"
+      autovpn_edges:
+        type: dict
+        keys:
+          name:
+            type: str
+            default: AUTOVPN_EDGES
+            description: Name of peer group.
+          password:
+            type: str
+            description: Type 7 encrypted password.
+          bfd:
+            type: bool
+            default: False
+          structured_config:
+            type: dict
+            description: Custom structured config added under router_bgp.peer_groups.[name=<name>] for eos_cli_config_gen.
+            documentation_options:
+              hide_keys: true
+            $ref: "eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/"
+      pathfinders:
+        type: dict
+        keys:
+          name:
+            type: str
+            default: PATHFINDERS
+            description: Name of peer group.
+          password:
+            type: str
+            description: Type 7 encrypted password.
+          bfd:
+            type: bool
+            default: False
+          structured_config:
+            type: dict
+            description: Custom structured config added under router_bgp.peer_groups.[name=<name>] for eos_cli_config_gen.
+            documentation_options:
+              hide_keys: true
+            $ref: "eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/"

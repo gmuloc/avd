@@ -1,0 +1,94 @@
+---
+design:
+  type: "wan"
+
+fabric_name: AUTOVPN
+
+default_node_types:
+  - node_type: rr
+    match_hostnames:
+      - "^rr.*$"
+  - node_type: edge
+    match_hostnames:
+      - "^edge.*$"
+
+bgp_as: 65000
+
+# BGP peer groups
+# TODO - fix some stuff here
+bgp_peer_groups:
+  autovpn_edges:
+    password: "SHsTgDgjVUU5a9blyxSt3Q=="
+  pathfinders:
+    password: "SHsTgDgjVUU5a9blyxSt3Q=="
+
+# Route-reflectors
+rr:
+  defaults:
+    # TODO check the correct name
+    platform: cloud-eos
+    loopback_ipv4_pool: 192.168.42.0/24
+  nodes:
+    - name: rr1
+      id: 1
+      transports:
+        - name: MPLS-1
+          interface: Ethernet1
+          public_ip: 10.1.0.72
+    - name: rr2
+      id: 2
+      transports:
+        - name: MPLS-2
+          interface: Ethernet2
+          public_ip: 10.2.0.72
+        - name: INTERNET
+          interface: Ethernet3
+          public_ip: 104.197.58.72
+
+# Edge
+edge:
+  defaults:
+    # TODO check the correct name
+    platform: cloud-eos
+    loopback_ipv4_pool: 192.168.42.0/24
+    loopback_ipv4_offset: 2
+    wan_route_reflectors: [rr1, rr2]
+  nodes:
+    - name: edge1
+      id: 1
+      transports:
+        - name: MPLS-1
+          interface: Ethernet1
+        - name: MPLS-2
+          interface: Ethernet2
+    - name: edge2
+      id: 2
+      transports:
+        - name: MPLS-1
+          interface: Ethernet1
+        - name: INTERNET
+          interface: Ethernet3
+    - name: edge3
+      id: 3
+      transports:
+        - name: INTERNET
+          interface: Ethernet3
+
+# Transports
+transports:
+  - name: MPLS-1
+    preference: always_use
+    accessibility: private
+  - name: MPLS-2
+    preference: always_use
+    accessibility: private
+  - name: INTERNET
+    preference: backup
+    accessibility: public
+
+# AUTOVPN configuration
+autovpn:
+  control_plane:
+    ipsec_key: 0112140D481F07
+  data_plane:
+    ipsec_key: 0112140D481F07123713705

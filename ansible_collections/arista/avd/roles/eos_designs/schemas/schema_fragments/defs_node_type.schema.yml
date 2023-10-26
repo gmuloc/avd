@@ -1054,6 +1054,38 @@ $defs:
                             min: 2
                             max: 255
                             default: 3
+          transports:
+            documentation_options:
+              table: node-type-wan-configuration
+            type: list
+            primary_key: name
+            description: List of WAN transports connected to the node
+            items:
+              type: dict
+              keys:
+                name:
+                  type: str
+                  description: Transport name.
+                interface:
+                  type: str
+                  description: Interface to connect to the transport -TODO can it be a list?
+                public_ip:
+                  type: str
+                  description: The public IP for the transport on the node.
+                ipsec_enabled:
+                  type: bool
+                  default: true
+                  description: Enable or disable IPSEC for a transport.
+          wan_route_reflectors:
+            documentation_options:
+              table: node-type-wan-configuration
+            type: list
+            convert_types:
+              - "str"
+            description: List of inventory hostname acting as WAN route-reflectors.
+            items:
+              type: str
+              description: Inventory_hostname_of_wan_route_reflectors.
       node_groups:
         type: list
         description: Define variables related to all nodes part of this group.

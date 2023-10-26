@@ -143,6 +143,10 @@ keys:
           type: bool
           default: false
           description: Is this switch an MPLS LSR.
+        wan:
+          type: bool
+          default: false
+          description: Is this switch a WAN device..
         ip_addressing:
           type: dict
           description: Override ip_addressing templates.

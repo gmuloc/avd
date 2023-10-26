@@ -935,6 +935,15 @@ $defs:
                       items:
                         type: str
                       description: Nodes is required to restrict configuration of BGP neighbors to certain nodes in the network.
+              path_selection:
+                description: |-
+                  TODO check if this makes sense here
+                type: dict
+                keys:
+                  enabled:
+                    type: bool
+                  policy_name:
+                    type: str
               raw_eos_cli:
                 type: str
                 description: EOS CLI rendered directly on the root level of the final EOS configuration.

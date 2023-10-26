@@ -10,7 +10,8 @@ Node Type,Node,Node Interface,Peer Type,Peer Node,Peer Interface,Node Interface 
 {%     set default_node_types = {
            "l3ls-evpn": ["spine", "l3leaf", "l2leaf", "super-spine", "overlay-controller"],
            "mpls": ["p", "pe", "rr"],
-           "l2ls": ["l3spine", "spine", "leaf"]
+           "l2ls": ["l3spine", "spine", "leaf"],
+           "wan": ["pathfinder", "rr", "transit", "edge"],
        } %}
 {%     set node_types = default_node_types[design.type | arista.avd.default("l3ls-evpn")] %}
 {% endif %}

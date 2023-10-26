@@ -5,6 +5,28 @@ $id: eos_designs
 type: dict
 allow_other_keys: true
 keys:
+  autovpn:
+    documentation_options:
+      table: wan
+    type: dict
+    description: AUTOVPN configuration
+    keys:
+      control_plane:
+        type: dict
+        description: 'Control Plan profile configuration.
+
+          TODO add other overwriting options later.'
+        keys:
+          ipsec_key:
+            type: str
+      data_plane:
+        type: dict
+        description: 'Data Plan profile configuration.
+
+          TODO add other overwriting options later.'
+        keys:
+          ipsec_key:
+            type: str
   avd_data_conversion_mode:
     documentation_options:
       table: role-input-validation
@@ -347,6 +369,46 @@ keys:
           new_key: bgp_peer_groups.evpn_overlay_peers
           removed: true
           remove_in_version: 4.0.0
+      autovpn_edges:
+        type: dict
+        keys:
+          name:
+            type: str
+            default: AUTOVPN_EDGES
+            description: Name of peer group.
+          password:
+            type: str
+            description: Type 7 encrypted password.
+          bfd:
+            type: bool
+            default: false
+          structured_config:
+            type: dict
+            description: Custom structured config added under router_bgp.peer_groups.[name=<name>]
+              for eos_cli_config_gen.
+            documentation_options:
+              hide_keys: true
+            $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
+      pathfinders:
+        type: dict
+        keys:
+          name:
+            type: str
+            default: PATHFINDERS
+            description: Name of peer group.
+          password:
+            type: str
+            description: Type 7 encrypted password.
+          bfd:
+            type: bool
+            default: false
+          structured_config:
+            type: dict
+            description: Custom structured config added under router_bgp.peer_groups.[name=<name>]
+              for eos_cli_config_gen.
+            documentation_options:
+              hide_keys: true
+            $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
   bgp_update_wait_install:
     documentation_options:
       table: bgp-settings
@@ -687,6 +749,7 @@ keys:
         - l3ls-evpn
         - mpls
         - l2ls
+        - wan
         default: l3ls-evpn
   enable_trunk_groups:
     documentation_options:
@@ -1469,6 +1532,10 @@ keys:
           type: bool
           default: false
           description: Is this switch an MPLS LSR.
+        wan:
+          type: bool
+          default: false
+          description: Is this switch a WAN device..
         ip_addressing:
           type: dict
           description: Override ip_addressing templates.
@@ -2718,6 +2785,34 @@ keys:
       table: management-settings
     type: str
     description: Clock timezone like "CET" or "US/Pacific".
+  transports:
+    documentation_options:
+      table: wan
+    type: list
+    primary_key: name
+    description: Transports definition used for WAN configuration
+    items:
+      type: dict
+      keys:
+        name:
+          type: str
+          description: Transport name
+        description:
+          type: str
+          description: A description for the transport - TODO maybe only for doc?
+        preference:
+          type: str
+          description: TODO
+          valid_values:
+          - always_use
+          - backup
+          - never_use
+        accessibility:
+          type: str
+          description: TODO
+          valid_values:
+          - public
+          - private
   trunk_groups:
     documentation_options:
       table: fabric-settings
@@ -4932,6 +5027,14 @@ $defs:
                         type: str
                       description: Nodes is required to restrict configuration of
                         BGP neighbors to certain nodes in the network.
+              path_selection:
+                description: TODO check if this makes sense here
+                type: dict
+                keys:
+                  enabled:
+                    type: bool
+                  policy_name:
+                    type: str
               raw_eos_cli:
                 type: str
                 description: EOS CLI rendered directly on the root level of the final
@@ -6485,6 +6588,39 @@ $defs:
                             min: 2
                             max: 255
                             default: 3
+          transports:
+            documentation_options:
+              table: node-type-wan-configuration
+            type: list
+            primary_key: name
+            description: List of WAN transports connected to the node
+            items:
+              type: dict
+              keys:
+                name:
+                  type: str
+                  description: Transport name.
+                interface:
+                  type: str
+                  description: Interface to connect to the transport -TODO can it
+                    be a list?
+                public_ip:
+                  type: str
+                  description: The public IP for the transport on the node.
+                ipsec_enabled:
+                  type: bool
+                  default: true
+                  description: Enable or disable IPSEC for a transport.
+          wan_route_reflectors:
+            documentation_options:
+              table: node-type-wan-configuration
+            type: list
+            convert_types:
+            - str
+            description: List of inventory hostname acting as WAN route-reflectors.
+            items:
+              type: str
+              description: Inventory_hostname_of_wan_route_reflectors.
       node_groups:
         type: list
         description: Define variables related to all nodes part of this group.

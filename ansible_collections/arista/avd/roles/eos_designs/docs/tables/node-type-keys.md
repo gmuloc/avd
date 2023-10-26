@@ -28,6 +28,7 @@
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;uplink_type</samp>](## "node_type_keys.[].uplink_type") | String |  | `p2p` | Valid Values:<br>- <code>p2p</code><br>- <code>port-channel</code> | Uplinks must be p2p if "vtep" or "underlay_router" is true. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;vtep</samp>](## "node_type_keys.[].vtep") | Boolean |  | `False` |  | Is this switch an EVPN VTEP. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;mpls_lsr</samp>](## "node_type_keys.[].mpls_lsr") | Boolean |  | `False` |  | Is this switch an MPLS LSR. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;wan</samp>](## "node_type_keys.[].wan") | Boolean |  | `False` |  | Is this switch a WAN device.. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;ip_addressing</samp>](## "node_type_keys.[].ip_addressing") | Dictionary |  |  |  | Override ip_addressing templates. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;python_module</samp>](## "node_type_keys.[].ip_addressing.python_module") | String |  |  |  | Custom Python Module to import for IP addressing. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;python_class_name</samp>](## "node_type_keys.[].ip_addressing.python_class_name") | String |  |  |  | Name of Custom Python Class to import for IP addressing. |
@@ -123,6 +124,9 @@
 
         # Is this switch an MPLS LSR.
         mpls_lsr: <bool; default=False>
+
+        # Is this switch a WAN device..
+        wan: <bool; default=False>
 
         # Override ip_addressing templates.
         ip_addressing:

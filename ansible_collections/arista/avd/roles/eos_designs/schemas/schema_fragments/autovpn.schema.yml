@@ -1,0 +1,31 @@
+# Copyright (c) 2023 Arista Networks, Inc.
+# Use of this source code is governed by the Apache License 2.0
+# that can be found in the LICENSE file.
+# yaml-language-server: $schema=../../../../plugins/plugin_utils/schema/avd_meta_schema.json
+# Line above is used by RedHat's YAML Schema vscode extension
+# Use Ctrl + Space to get suggestions for every field. Autocomplete will pop up after typing 2 letters.
+type: dict
+keys:
+  autovpn:
+    documentation_options:
+      table: wan
+    type: dict
+    description: |-
+      AUTOVPN configuration
+    keys:
+      control_plane:
+        type: dict
+        description: |-
+          Control Plan profile configuration.
+          TODO add other overwriting options later.
+        keys:
+          ipsec_key:
+            type: str
+      data_plane:
+        type: dict
+        description: |-
+          Data Plan profile configuration.
+          TODO add other overwriting options later.
+        keys:
+          ipsec_key:
+            type: str
