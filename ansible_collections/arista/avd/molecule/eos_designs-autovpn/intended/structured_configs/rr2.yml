@@ -94,6 +94,35 @@ route_maps:
     type: permit
     match:
     - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+router_path_selection:
+  peer_dynamic_source: stun
+  path_groups:
+  - name: MPLS-2
+    id: 200
+    ipsec_profile: AUTOVPNTUNNEL
+    local_interfaces:
+    - name: Ethernet2
+    dynamic_peers: null
+    static_peers: null
+  - name: INTERNET
+    id: 300
+    ipsec_profile: AUTOVPNTUNNEL
+    local_interfaces:
+    - name: Ethernet3
+    dynamic_peers: null
+    static_peers: null
+  load_balance_policies:
+  - name: LBPOLICY
+    path_groups:
+    - MPLS-2
+    - INTERNET
+  policies:
+  - name: dps-policy-default
+    default_match:
+      load_balance: LBPOLICY
+  vrfs:
+  - name: default
+    path_selection_policy: dps-policy-default
 stun:
   server:
     local_interfaces:

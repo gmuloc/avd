@@ -32,6 +32,7 @@
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
+  - [Router Path-selection](#router-path-selection)
 - [STUN](#stun)
   - [STUN Client](#stun-client)
   - [STUN Device Configuration](#stun-device-configuration)
@@ -427,6 +428,84 @@ route-map RM-CONN-2-BGP permit 10
 vrf instance MGMT
 !
 vrf instance SE_LAB
+```
+
+### Router Path-selection
+
+#### Path Groups
+
+##### Path Group MPLS-1
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 100 |
+| IPSec profile | AUTOVPNTUNNEL |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet1 | - |  |
+
+##### Path Group MPLS-2
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 200 |
+| IPSec profile | AUTOVPNTUNNEL |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet2 | - |  |
+
+#### Load-balance policies
+
+| Policy name | Path group(s) |
+| ----------- | ------------- |
+| LBPOLICY | MPLS-1<br>MPLS-2 |
+
+#### DPS policies
+
+##### DPS policy dps-policy-default
+
+| Rule ID | Application profile | Load-balance policy |
+| ------- | ------------------- | ------------------- |
+| Default Match | - | LBPOLICY |
+
+#### VRFs configuration
+
+| VRF name | DPS policy |
+| -------- | ---------- |
+| default | dps-policy-default |
+
+#### Router Path-selection Device Configuration
+
+```eos
+!
+router path-selection
+   !
+   path-group MPLS-1 id 100
+      ipsec profile AUTOVPNTUNNEL
+      !
+      local interface Ethernet1
+   !
+   path-group MPLS-2 id 200
+      ipsec profile AUTOVPNTUNNEL
+      !
+      local interface Ethernet2
+   !
+   load-balance policy LBPOLICY
+      path-group MPLS-1
+      path-group MPLS-2
+   !
+   policy dps-policy-default
+      default-match
+         load-balance LBPOLICY
+   !
+   vrf default
+      path-selection-policy dps-policy-default
 ```
 
 ## STUN

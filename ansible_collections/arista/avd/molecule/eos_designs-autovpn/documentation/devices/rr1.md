@@ -30,6 +30,7 @@
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
+  - [Router Path-selection](#router-path-selection)
 - [STUN](#stun)
   - [STUN Server](#stun-server)
   - [STUN Device Configuration](#stun-device-configuration)
@@ -361,6 +362,72 @@ route-map RM-CONN-2-BGP permit 10
 ```eos
 !
 vrf instance MGMT
+```
+
+### Router Path-selection
+
+#### Router Path-selection Summary
+
+| Setting | Value |
+| ------  | ----- |
+| Dynamic peers source | STUN |
+
+#### Path Groups
+
+##### Path Group MPLS-1
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 100 |
+| IPSec profile | AUTOVPNTUNNEL |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet1 | - |  |
+
+#### Load-balance policies
+
+| Policy name | Path group(s) |
+| ----------- | ------------- |
+| LBPOLICY | MPLS-1 |
+
+#### DPS policies
+
+##### DPS policy dps-policy-default
+
+| Rule ID | Application profile | Load-balance policy |
+| ------- | ------------------- | ------------------- |
+| Default Match | - | LBPOLICY |
+
+#### VRFs configuration
+
+| VRF name | DPS policy |
+| -------- | ---------- |
+| default | dps-policy-default |
+
+#### Router Path-selection Device Configuration
+
+```eos
+!
+router path-selection
+   peer dynamic source stun
+   !
+   path-group MPLS-1 id 100
+      ipsec profile AUTOVPNTUNNEL
+      !
+      local interface Ethernet1
+   !
+   load-balance policy LBPOLICY
+      path-group MPLS-1
+   !
+   policy dps-policy-default
+      default-match
+         load-balance LBPOLICY
+   !
+   vrf default
+      path-selection-policy dps-policy-default
 ```
 
 ## STUN

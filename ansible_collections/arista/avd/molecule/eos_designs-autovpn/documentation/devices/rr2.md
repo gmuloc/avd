@@ -30,6 +30,7 @@
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
+  - [Router Path-selection](#router-path-selection)
 - [STUN](#stun)
   - [STUN Server](#stun-server)
   - [STUN Device Configuration](#stun-device-configuration)
@@ -361,6 +362,91 @@ route-map RM-CONN-2-BGP permit 10
 ```eos
 !
 vrf instance MGMT
+```
+
+### Router Path-selection
+
+#### Router Path-selection Summary
+
+| Setting | Value |
+| ------  | ----- |
+| Dynamic peers source | STUN |
+
+#### Path Groups
+
+##### Path Group INTERNET
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 300 |
+| IPSec profile | AUTOVPNTUNNEL |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet3 | - |  |
+
+##### Path Group MPLS-2
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 200 |
+| IPSec profile | AUTOVPNTUNNEL |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet2 | - |  |
+
+#### Load-balance policies
+
+| Policy name | Path group(s) |
+| ----------- | ------------- |
+| LBPOLICY | INTERNET<br>MPLS-2 |
+
+#### DPS policies
+
+##### DPS policy dps-policy-default
+
+| Rule ID | Application profile | Load-balance policy |
+| ------- | ------------------- | ------------------- |
+| Default Match | - | LBPOLICY |
+
+#### VRFs configuration
+
+| VRF name | DPS policy |
+| -------- | ---------- |
+| default | dps-policy-default |
+
+#### Router Path-selection Device Configuration
+
+```eos
+!
+router path-selection
+   peer dynamic source stun
+   !
+   path-group INTERNET id 300
+      ipsec profile AUTOVPNTUNNEL
+      !
+      local interface Ethernet3
+   !
+   path-group MPLS-2 id 200
+      ipsec profile AUTOVPNTUNNEL
+      !
+      local interface Ethernet2
+   !
+   load-balance policy LBPOLICY
+      path-group MPLS-2
+      path-group INTERNET
+   !
+   policy dps-policy-default
+      default-match
+         load-balance LBPOLICY
+   !
+   vrf default
+      path-selection-policy dps-policy-default
 ```
 
 ## STUN

@@ -5,9 +5,7 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from ansible_collections.arista.avd.plugins.filter.natural_sort import natural_sort
-from ansible_collections.arista.avd.plugins.filter.range_expand import range_expand
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import get, get_item
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
 
 from .utils import UtilsMixin
 
@@ -30,26 +28,28 @@ class RouterPathSelectionMixin(UtilsMixin):
         router_path_selection = {}
 
         if self.shared_utils.type in ["pathfinders", "rr"]:
-            router_path_selection["peer_dynamic_source"] = "stun
+            router_path_selection["peer_dynamic_source"] = "stun"
 
         path_groups = []
         for transport in get(self.shared_utils.switch_data_combined, "transports", []):
-            path_group.append({
-                "name": transport.get("name"),
-                "id": self._get_transport_id(transport),
-                # TODO CHANGE NEXT
-                "ipsec_profile": "AUTOVPNTUNNEL",
-                # TODO handle multiple interfaces
-                "local_interfaces": [tranport.get("interface")],
-                "dynamic_peers": self._get_dynamic_peers(transport),
-                "static_peers": self._get_static_peers(transport),
-            })
+            path_groups.append(
+                {
+                    "name": transport.get("name"),
+                    "id": self._get_transport_id(transport),
+                    # TODO CHANGE NEXT
+                    "ipsec_profile": "AUTOVPNTUNNEL",
+                    # TODO handle multiple interfaces
+                    "local_interfaces": self._get_local_interfaces(transport),
+                    "dynamic_peers": self._get_dynamic_peers(transport),
+                    "static_peers": self._get_static_peers(transport),
+                }
+            )
 
         router_path_selection["path_groups"] = path_groups
 
         # TODO Load balance policy - for now one policy with all path_groups
         load_balance_policies = []
-        load_balance_policies.append({"name": "LBPOLICY", "path_groups": [pg.name for pg in path_groups]})
+        load_balance_policies.append({"name": "LBPOLICY", "path_groups": [pg.get("name") for pg in path_groups]})
         router_path_selection["load_balance_policies"] = load_balance_policies
 
         # TODO DPS policies - for now adding one default one - MAYBE NEED TO REMOVED
@@ -58,11 +58,12 @@ class RouterPathSelectionMixin(UtilsMixin):
 
         # TODO - Adding default VRF here - check if it makes sense later
         vrfs = [{"name": "default", "path_selection_policy": "dps-policy-default"}]
+        router_path_selection["vrfs"] = vrfs
 
         # TODO maybe strip empty
         return router_path_selection
 
-    def _get_transport_id(self, transport) -> int:
+    def _get_transport_id(self, transport: dict) -> int:
         """
         TODO - implement stuff from Venkit
         """
@@ -74,3 +75,22 @@ class RouterPathSelectionMixin(UtilsMixin):
         if transport["name"] == "INTERNET":
             return 300
         return 666
+
+    def _get_local_interfaces(self, transport: dict) -> dict | None:
+        """
+        TODO - handle multiples interfaces ?
+        TODO - add STUN where required
+        """
+        return [{"name": transport.get("interface")}]
+
+    def _get_dynamic_peers(self, transport: dict) -> dict | None:
+        """
+        TODO generate peer dynamic config
+        """
+        return None
+
+    def _get_static_peers(self, transport: dict) -> dict | None:
+        """
+        TODO generate peer static config
+        """
+        return None
