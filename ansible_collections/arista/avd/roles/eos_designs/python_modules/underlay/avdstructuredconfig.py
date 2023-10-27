@@ -13,7 +13,6 @@ from .router_bgp import RouterBgpMixin
 from .router_isis import RouterIsisMixin
 from .router_msdp import RouterMsdpMixin
 from .router_ospf import RouterOspfMixin
-from .router_path_selection import RouterPathSelectionMixin
 from .router_pim_sparse_mode import RouterPimSparseModeMixin
 from .standard_access_lists import StandardAccessListsMixin
 from .stun import StunMixin
@@ -32,7 +31,6 @@ class AvdStructuredConfigUnderlay(
     RouteMapsMixin,
     RouterIsisMixin,
     RouterMsdpMixin,
-    RouterPathSelectionMixin,
     RouterPimSparseModeMixin,
     StandardAccessListsMixin,
     StunMixin,

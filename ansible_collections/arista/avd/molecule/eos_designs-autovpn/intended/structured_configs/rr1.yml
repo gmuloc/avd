@@ -94,6 +94,15 @@ route_maps:
     type: permit
     match:
     - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+stun:
+  server:
+    local_interfaces:
+    - Ethernet1
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
 router_path_selection:
   peer_dynamic_source: stun
   path_groups:
@@ -115,12 +124,3 @@ router_path_selection:
   vrfs:
   - name: default
     path_selection_policy: dps-policy-default
-stun:
-  server:
-    local_interfaces:
-    - Ethernet1
-router_bfd:
-  multihop:
-    interval: 300
-    min_rx: 300
-    multiplier: 3

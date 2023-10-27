@@ -103,6 +103,20 @@ route_maps:
     type: permit
     match:
     - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+stun:
+  client:
+    server_profiles:
+    - name: rr1-MPLS-1
+      ip_address: 10.1.0.72
+    - name: rr2-MPLS-2
+      ip_address: 10.2.0.72
+    - name: rr2-INTERNET
+      ip_address: 104.197.58.72
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
 router_path_selection:
   path_groups:
   - name: MPLS-1
@@ -136,20 +150,6 @@ router_path_selection:
     path_selection_policy: dps-policy-default
   - name: SE_LAB
     path_selection_policy: dps-policy-SE_LAB
-stun:
-  client:
-    server_profiles:
-    - name: rr1-MPLS-1
-      ip_address: 10.1.0.72
-    - name: rr2-MPLS-2
-      ip_address: 10.2.0.72
-    - name: rr2-INTERNET
-      ip_address: 104.197.58.72
-router_bfd:
-  multihop:
-    interval: 300
-    min_rx: 300
-    multiplier: 3
 ip_igmp_snooping:
   globally_enabled: true
 dps_interfaces:

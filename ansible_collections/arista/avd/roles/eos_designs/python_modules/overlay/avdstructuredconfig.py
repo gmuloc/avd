@@ -9,6 +9,7 @@ from .management_cvx import ManagementCvxMixin
 from .route_maps import RouteMapsMixin
 from .router_bfd import RouterBfdMixin
 from .router_bgp import RouterBgpMixin
+from .router_path_selection import RouterPathSelectionMixin
 
 
 class AvdStructuredConfigOverlay(
@@ -19,6 +20,7 @@ class AvdStructuredConfigOverlay(
     RouterBfdMixin,
     RouterBgpMixin,
     RouteMapsMixin,
+    RouterPathSelectionMixin,
 ):
     """
     The AvdStructuredConfig Class is imported used "get_structured_config" to render parts of the structured config.
