@@ -120,9 +120,14 @@ router_path_selection:
   - name: dps-policy-default
     default_match:
       load_balance: LBPOLICY
+  - name: dps-policy-SE_LAB
+    default_match:
+      load_balance: LBPOLICY
   vrfs:
   - name: default
     path_selection_policy: dps-policy-default
+  - name: SE_LAB
+    path_selection_policy: dps-policy-SE_LAB
 stun:
   client:
     server_profiles:

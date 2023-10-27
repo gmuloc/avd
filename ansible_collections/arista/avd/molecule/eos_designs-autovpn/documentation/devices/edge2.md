@@ -474,11 +474,18 @@ vrf instance SE_LAB
 | ------- | ------------------- | ------------------- |
 | Default Match | - | LBPOLICY |
 
+##### DPS policy dps-policy-SE_LAB
+
+| Rule ID | Application profile | Load-balance policy |
+| ------- | ------------------- | ------------------- |
+| Default Match | - | LBPOLICY |
+
 #### VRFs configuration
 
 | VRF name | DPS policy |
 | -------- | ---------- |
 | default | dps-policy-default |
+| SE_LAB | dps-policy-SE_LAB |
 
 #### Router Path-selection Device Configuration
 
@@ -504,8 +511,15 @@ router path-selection
       default-match
          load-balance LBPOLICY
    !
+   policy dps-policy-SE_LAB
+      default-match
+         load-balance LBPOLICY
+   !
    vrf default
       path-selection-policy dps-policy-default
+   !
+   vrf SE_LAB
+      path-selection-policy dps-policy-SE_LAB
 ```
 
 ## STUN

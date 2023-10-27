@@ -18,6 +18,7 @@ from .router_bgp import RouterBgpMixin
 from .router_isis import RouterIsisMixin
 from .router_multicast import RouterMulticastMixin
 from .router_ospf import RouterOspfMixin
+from .router_path_selection import RouterPathSelectionMixin
 from .router_pim_sparse_mode import RouterPimSparseModeMixin
 from .standard_access_lists import StandardAccessListsMixin
 from .static_routes import StaticRoutesMixin
@@ -54,6 +55,7 @@ class AvdStructuredConfigNetworkServices(
     RouterIsisMixin,
     RouterMulticastMixin,
     RouterPimSparseModeMixin,
+    RouterPathSelectionMixin,
     StandardAccessListsMixin,
 ):
     """
