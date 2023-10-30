@@ -34,6 +34,9 @@ class StunMixin(UtilsMixin):
             for wan_route_reflector, data in self._wan_route_reflectors.items():
                 # TODO GUARDS GUARDS!!
                 for transport in data.get("transports"):
+                    router_transports_name = [transport["name"] for transport in get(self.shared_utils.switch_data_combined, "transports", [])]
+                    if transport["name"] not in router_transports_name:
+                        continue
                     server_profiles.append(
                         {
                             "name": f"{wan_route_reflector}-{transport['name']}",

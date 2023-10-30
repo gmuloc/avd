@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import get, get_item
 
 from .utils import UtilsMixin
 
@@ -15,6 +15,8 @@ class RouterPathSelectionMixin(UtilsMixin):
     Mixin Class used to generate structured config for one key.
     Class should only be used as Mixin to a AvdStructuredConfig class
     """
+
+    # TODO - MUST NOT RELY ON TYPE -> need knobs in node type key
 
     @cached_property
     def router_path_selection(self) -> dict | None:
@@ -40,7 +42,7 @@ class RouterPathSelectionMixin(UtilsMixin):
                     "ipsec_profile": "AUTOVPNTUNNEL",
                     # TODO handle multiple interfaces
                     "local_interfaces": self._get_local_interfaces(transport),
-                    "dynamic_peers": self._get_dynamic_peers(transport),
+                    "dynamic_peers": self._get_dynamic_peers(),
                     "static_peers": self._get_static_peers(transport),
                 }
             )
@@ -83,14 +85,32 @@ class RouterPathSelectionMixin(UtilsMixin):
         """
         return [{"name": transport.get("interface")}]
 
-    def _get_dynamic_peers(self, transport: dict) -> dict | None:
-        """
-        TODO generate peer dynamic config
-        """
-        return None
+    def _get_dynamic_peers(self) -> dict | None:
+        """ """
+        if self.shared_utils.type not in ["transit", "edge"]:
+            return None
+        return {"enabled": True}
 
-    def _get_static_peers(self, transport: dict) -> dict | None:
+    def _get_static_peers(self, transport: dict) -> list | None:
         """
         TODO generate peer static config
         """
-        return None
+        if self.shared_utils.type not in ["transit", "edge"]:
+            return None
+        static_peers = []
+        # TODO need some way to loop through rr/pathfinders transports public_ips
+        # TODO - probably need to filter on public IPs as I guess not needed for MPLS -> ask
+        for wan_route_reflector, data in self._wan_route_reflectors.items():
+            # TODO GUARDS GUARDS!!
+            # TODO make next logic nicer.. rendering only if transport is present on the remote RR
+            if not (transport_data := get_item(data["transports"], "name", transport["name"], default={})):
+                continue
+            ipv4_addresses = [transport_data.get("public_ip")]
+            static_peers.append(
+                {
+                    "router_ip": data.get("router_id"),
+                    "name": wan_route_reflector,
+                    "ipv4_addresses": ipv4_addresses,
+                }
+            )
+        return static_peers

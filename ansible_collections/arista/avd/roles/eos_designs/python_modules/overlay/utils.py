@@ -236,6 +236,24 @@ class UtilsMixin:
 
         return mpls_rr_peers
 
+    @cached_property
+    def _wan_route_reflectors(self) -> dict:
+        """
+        TODO - trying to get the info for the RR - public_ip, name, ...
+        TODO - repeated between underlay and overlay - can surely do better
+        """
+        wan_route_reflectors = {}
+
+        for route_reflector in natural_sort(get(self._hostvars, "switch.wan_route_reflectors", default=[])):
+            if route_reflector == self.shared_utils.hostname:
+                continue
+
+            peer_facts = self.shared_utils.get_peer_facts(route_reflector, required=True)
+
+            self._append_peer(wan_route_reflectors, route_reflector, peer_facts)
+
+        return wan_route_reflectors
+
     def _append_peer(self, peers_dict: dict, peer_name: str, peer_facts: dict) -> None:
         """
         Retieve bgp_as and "overlay.peering_address" from peer_facts and append
@@ -256,4 +274,6 @@ class UtilsMixin:
                 required=True,
                 org_key=f"switch.overlay.peering_address for {peer_name}",
             ),
+            "router_id": peer_facts.get("router_id"),
+            "transports": peer_facts.get("wan_transports"),
         }

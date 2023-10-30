@@ -110,8 +110,6 @@ stun:
       ip_address: 10.1.0.72
     - name: rr2-MPLS-2
       ip_address: 10.2.0.72
-    - name: rr2-INTERNET
-      ip_address: 104.197.58.72
 router_bfd:
   multihop:
     interval: 300
@@ -124,15 +122,25 @@ router_path_selection:
     ipsec_profile: AUTOVPNTUNNEL
     local_interfaces:
     - name: Ethernet1
-    dynamic_peers: null
-    static_peers: null
+    dynamic_peers:
+      enabled: true
+    static_peers:
+    - router_ip: 192.168.42.1
+      name: rr1
+      ipv4_addresses:
+      - 10.1.0.72
   - name: MPLS-2
     id: 200
     ipsec_profile: AUTOVPNTUNNEL
     local_interfaces:
     - name: Ethernet2
-    dynamic_peers: null
-    static_peers: null
+    dynamic_peers:
+      enabled: true
+    static_peers:
+    - router_ip: 192.168.42.2
+      name: rr2
+      ipv4_addresses:
+      - 10.2.0.72
   load_balance_policies:
   - name: LBPOLICY
     path_groups:

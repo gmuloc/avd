@@ -447,6 +447,19 @@ vrf instance SE_LAB
 | -------------- | -------------- | ---------------------- |
 | Ethernet3 | - |  |
 
+###### Dynamic peers settings
+
+| Setting | Value |
+| ------  | ----- |
+| IP Local | - |
+| IPSec | - |
+
+###### Static peers
+
+| Router IP | Name | IPv4 address(es) |
+| --------- | ---- | ---------------- |
+| 192.168.42.2 | rr2 | 104.197.58.72 |
+
 #### Load-balance policies
 
 | Policy name | Path group(s) |
@@ -484,6 +497,12 @@ router path-selection
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet3
+      !
+      peer dynamic
+      !
+      peer static router-ip 192.168.42.2
+         name rr2
+         ipv4 address 104.197.58.72
    !
    load-balance policy LBPOLICY
       path-group INTERNET
@@ -511,9 +530,7 @@ router path-selection
 
 | Server Profile | IP address |
 | -------------- | ---------- |
-| rr1-MPLS-1 | 10.1.0.72 |
 | rr2-INTERNET | 104.197.58.72 |
-| rr2-MPLS-2 | 10.2.0.72 |
 
 ### STUN Device Configuration
 
@@ -521,10 +538,6 @@ router path-selection
 !
 stun
    client
-      server-profile rr1-MPLS-1
-         ip address 10.1.0.72
       server-profile rr2-INTERNET
          ip address 104.197.58.72
-      server-profile rr2-MPLS-2
-         ip address 10.2.0.72
 ```
