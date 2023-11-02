@@ -31,8 +31,9 @@ class RouterBgpMixin(UtilsMixin):
             "bgp_cluster_id": self._bgp_cluster_id(),
             "listen_ranges": self._bgp_listen_ranges(),
             "peer_groups": self._peer_groups(),
-            "address_family_ipv4": self._address_family_ipv4(),
             "address_family_evpn": self._address_family_evpn(),
+            "address_family_ipv4": self._address_family_ipv4(),
+            "address_family_path_selection": self._address_family_path_selection(),
             "address_family_rtc": self._address_family_rtc(),
             "bgp": self._bgp_overlay_dpath(),
             "address_family_vpn_ipv4": self._address_family_vpn_ipvx(4),
@@ -121,7 +122,8 @@ class RouterBgpMixin(UtilsMixin):
 
                 peer_groups.append(mpls_peer_group)
 
-            if self.shared_utils.overlay_evpn_vxlan is True:
+            # TODO - not great to have this logic with not WAN
+            if self.shared_utils.overlay_evpn_vxlan is True and self.shared_utils.wan is not True:
                 # EVPN OVERLAY peer group - also in EBGP..
                 ebgp_peer_group = {
                     **self._generate_base_peer_group("evpn", "evpn_overlay_peers"),
@@ -136,6 +138,37 @@ class RouterBgpMixin(UtilsMixin):
             if self._is_mpls_server is True:
                 peer_groups.append({**self._generate_base_peer_group("mpls", "rr_overlay_peers"), "remote_as": self.shared_utils.bgp_as})
 
+            if self.shared_utils.wan:
+                # TODO, do not use role, do not hardcode names, do not select name based on role as it makes it
+                # unconfigruable - probably need 2
+                if self.shared_utils.type in ["pathfinders", "rr"]:
+                    peer_groups.append(
+                        {
+                            "name": self.shared_utils.bgp_peer_groups["autovpn_edges"]["name"],
+                            "type": "wan",
+                            "remote_as": self.shared_utils.bgp_as,
+                            "update_source": "Loopback0",
+                            "password": self.shared_utils.bgp_peer_groups["autovpn_edges"]["password"],
+                            "send_community": "all",
+                            "maximum_routes": 12000,
+                            "route_reflector_client": True,
+                            "struct_cfg": self.shared_utils.bgp_peer_groups["autovpn_edges"]["structured_config"],
+                        }
+                    )
+                else:
+                    peer_groups.append(
+                        {
+                            "name": self.shared_utils.bgp_peer_groups["pathfinders"]["name"],
+                            "type": "wan",
+                            "remote_as": self.shared_utils.bgp_as,
+                            "update_source": "Loopback0",
+                            "password": self.shared_utils.bgp_peer_groups["pathfinders"]["password"],
+                            "send_community": "all",
+                            "maximum_routes": 12000,
+                            "struct_cfg": self.shared_utils.bgp_peer_groups["pathfinders"]["structured_config"],
+                        }
+                    )
+
         # same for ebgp and ibgp
         if self.shared_utils.overlay_ipvpn_gateway is True:
             peer_groups.append(
@@ -148,13 +181,19 @@ class RouterBgpMixin(UtilsMixin):
 
         return peer_groups
 
-    def _address_family_ipv4(self) -> list:
+    def _address_family_ipv4(self) -> dict | None:
         """
         deactivate the relevant peer_groups in address_family_ipv4
         """
         peer_groups = []
 
-        if self.shared_utils.overlay_evpn_vxlan is True:
+        if self.shared_utils.wan:
+            pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
+            pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
+            peer_groups.append({"name": pg_name, "activate": False})
+
+        # no elif
+        elif self.shared_utils.overlay_evpn_vxlan is True:
             peer_groups.append({"name": self.shared_utils.bgp_peer_groups["evpn_overlay_peers"]["name"], "activate": False})
 
         if self.shared_utils.overlay_routing_protocol == "ebgp":
@@ -173,13 +212,20 @@ class RouterBgpMixin(UtilsMixin):
 
         return {"peer_groups": peer_groups}
 
-    def _address_family_evpn(self) -> list:
+    def _address_family_evpn(self) -> dict | None:
         """ """
         address_family_evpn = {}
 
         peer_groups = []
 
-        if self.shared_utils.overlay_evpn_vxlan is True:
+        # TODO no name
+        if self.shared_utils.wan:
+            pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
+            pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
+            peer_groups.append({"name": pg_name, "activate": True})
+
+        # TODO not elif
+        elif self.shared_utils.overlay_evpn_vxlan is True:
             overlay_peer_group_name = self.shared_utils.bgp_peer_groups["evpn_overlay_peers"]["name"]
             peer_groups.append({"name": overlay_peer_group_name, "activate": True})
 
@@ -244,7 +290,29 @@ class RouterBgpMixin(UtilsMixin):
 
         return address_family_evpn
 
-    def _address_family_rtc(self) -> list | None:
+    def _address_family_path_selection(self) -> dict | None:
+        """ """
+        if not self.shared_utils.wan:
+            return None
+
+        address_family_path_selection = {}
+
+        peer_groups = []
+
+        # TODO no name selection that is not configurable -> maybe a name based on type in shared_utils ?
+        pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
+        pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
+        peer_groups.append({"name": pg_name, "activate": True, "additional_paths": {"receive": True, "send": {"any": True}}})
+
+        address_family_path_selection["peer_groups"] = peer_groups
+
+        # TODO do not use type
+        if self.shared_utils.type in ["pathfinders", "rr"]:
+            address_family_path_selection["bgp"] = {"additional_paths": {"receive": True, "send": {"any": True}}}
+
+        return address_family_path_selection
+
+    def _address_family_rtc(self) -> dict | None:
         """
         Activate EVPN OVERLAY peer group and EVPN OVERLAY CORE peer group (if present)
         in address_family_rtc

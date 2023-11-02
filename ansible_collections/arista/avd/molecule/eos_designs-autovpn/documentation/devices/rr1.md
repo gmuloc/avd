@@ -24,9 +24,6 @@
   - [Router BGP](#router-bgp)
 - [BFD](#bfd)
   - [Router BFD](#router-bfd)
-- [Filters](#filters)
-  - [Prefix-lists](#prefix-lists)
-  - [Route-maps](#route-maps)
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
@@ -228,31 +225,31 @@ no ip routing vrf MGMT
 | ------ | --------- |
 | 65000 | 192.168.42.1 |
 
+| BGP AS | Cluster ID |
+| ------ | --------- |
+| 65000 | 192.168.42.1 |
+
 | BGP Tuning |
 | ---------- |
 | update wait-install |
 | no bgp default ipv4-unicast |
 | maximum-paths 4 ecmp 4 |
 
+#### Router BGP Listen Ranges
+
+| Prefix | Peer-ID Include Router ID | Peer Group | Peer-Filter | Remote-AS | VRF |
+| ------ | ------------------------- | ---------- | ----------- | --------- | --- |
+
 #### Router BGP Peer Groups
 
-##### EVPN-OVERLAY-PEERS
+##### autovpnEdges
 
 | Settings | Value |
 | -------- | ----- |
-| Address Family | evpn |
-| Next-hop unchanged | True |
+| Address Family | wan |
+| Remote AS | 65000 |
+| Route Reflector Client | Yes |
 | Source | Loopback0 |
-| BFD | True |
-| Ebgp multihop | 3 |
-| Send community | all |
-| Maximum routes | 0 (no limit) |
-
-##### IPv4-UNDERLAY-PEERS
-
-| Settings | Value |
-| -------- | ----- |
-| Address Family | ipv4 |
 | Send community | all |
 | Maximum routes | 12000 |
 
@@ -262,7 +259,15 @@ no ip routing vrf MGMT
 
 | Peer Group | Activate | Encapsulation |
 | ---------- | -------- | ------------- |
-| EVPN-OVERLAY-PEERS | True | default |
+| autovpnEdges | True | default |
+
+#### Router BGP Path-Selection Address Family
+
+##### Path-Selection Peer Groups
+
+| Peer Group | Activate |
+| ---------- | -------- |
+| autovpnEdges | True |
 
 #### Router BGP Device Configuration
 
@@ -273,24 +278,28 @@ router bgp 65000
    maximum-paths 4 ecmp 4
    update wait-install
    no bgp default ipv4-unicast
-   neighbor EVPN-OVERLAY-PEERS peer group
-   neighbor EVPN-OVERLAY-PEERS next-hop-unchanged
-   neighbor EVPN-OVERLAY-PEERS update-source Loopback0
-   neighbor EVPN-OVERLAY-PEERS bfd
-   neighbor EVPN-OVERLAY-PEERS ebgp-multihop 3
-   neighbor EVPN-OVERLAY-PEERS send-community
-   neighbor EVPN-OVERLAY-PEERS maximum-routes 0
-   neighbor IPv4-UNDERLAY-PEERS peer group
-   neighbor IPv4-UNDERLAY-PEERS send-community
-   neighbor IPv4-UNDERLAY-PEERS maximum-routes 12000
-   redistribute connected route-map RM-CONN-2-BGP
+   bgp cluster-id 192.168.42.1
+   neighbor autovpnEdges peer group
+   neighbor autovpnEdges remote-as 65000
+   neighbor autovpnEdges update-source Loopback0
+   neighbor autovpnEdges route-reflector-client
+   neighbor autovpnEdges password 7 <removed>
+   neighbor autovpnEdges send-community
+   neighbor autovpnEdges maximum-routes 12000
    !
    address-family evpn
-      neighbor EVPN-OVERLAY-PEERS activate
+      neighbor autovpnEdges activate
    !
    address-family ipv4
+      no neighbor autovpnEdges activate
       no neighbor EVPN-OVERLAY-PEERS activate
-      neighbor IPv4-UNDERLAY-PEERS activate
+   !
+   address-family path-selection
+      bgp additional-paths receive
+      bgp additional-paths send any
+      neighbor autovpnEdges activate
+      neighbor autovpnEdges additional-paths receive
+      neighbor autovpnEdges additional-paths send any
 ```
 
 ## BFD
@@ -309,44 +318,6 @@ router bgp 65000
 !
 router bfd
    multihop interval 300 min-rx 300 multiplier 3
-```
-
-## Filters
-
-### Prefix-lists
-
-#### Prefix-lists Summary
-
-##### PL-LOOPBACKS-EVPN-OVERLAY
-
-| Sequence | Action |
-| -------- | ------ |
-| 10 | permit 192.168.42.0/24 eq 32 |
-
-#### Prefix-lists Device Configuration
-
-```eos
-!
-ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
-   seq 10 permit 192.168.42.0/24 eq 32
-```
-
-### Route-maps
-
-#### Route-maps Summary
-
-##### RM-CONN-2-BGP
-
-| Sequence | Type | Match | Set | Sub-Route-Map | Continue |
-| -------- | ---- | ----- | --- | ------------- | -------- |
-| 10 | permit | ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY | - | - | - |
-
-#### Route-maps Device Configuration
-
-```eos
-!
-route-map RM-CONN-2-BGP permit 10
-   match ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 ```
 
 ## VRF Instances
