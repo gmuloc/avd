@@ -29,6 +29,7 @@ class RouterBgpMixin(UtilsMixin):
 
         router_bgp = {
             "bgp_cluster_id": self._bgp_cluster_id(),
+            "listen_ranges": self._bgp_listen_ranges(),
             "peer_groups": self._peer_groups(),
             "address_family_ipv4": self._address_family_ipv4(),
             "address_family_evpn": self._address_family_evpn(),
@@ -47,6 +48,24 @@ class RouterBgpMixin(UtilsMixin):
             if self.shared_utils.evpn_role == "server" or self.shared_utils.mpls_overlay_role == "server":
                 return get(self.shared_utils.switch_data_combined, "bgp_cluster_id", default=self.shared_utils.router_id)
         return None
+
+    def _bgp_listen_ranges(self) -> list | None:
+        """
+        Generate listen ranges
+        TODO make peer_group name parametrizable
+        """
+        if not self.shared_utils.wan:
+            return None
+
+        if self.shared_utils.type not in ["pathfinders", "rr"]:
+            return None
+
+        return [
+            {
+                "prefix": self.shared_utils.loopback_ipv4_pool,
+                "peer_group": "autovpnEdges",
+            }
+        ]
 
     def _generate_base_peer_group(self, pg_type: str, pg_name: str) -> dict:
         if pg_type not in ["mpls", "evpn"]:
