@@ -62,7 +62,7 @@ class RouterPathSelectionMixin(UtilsMixin):
         vrfs = [{"name": "default", "path_selection_policy": "dps-policy-default"}]
         router_path_selection["vrfs"] = vrfs
 
-        # TODO maybe strip empty
+        router_path_selection = {key: value for key, value in router_path_selection.items() if value is not None}
         return router_path_selection
 
     def _get_transport_id(self, transport: dict) -> int:

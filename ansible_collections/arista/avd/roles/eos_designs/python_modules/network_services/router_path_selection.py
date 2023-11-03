@@ -43,5 +43,5 @@ class RouterPathSelectionMixin(UtilsMixin):
                 vrfs = [{"name": vrf_name, "path_selection_policy": policy_name}]
                 router_path_selection["vrfs"] = vrfs
 
-                # TODO maybe strip empty
-                return router_path_selection
+        # TODO maybe strip empty
+        return router_path_selection
