@@ -136,6 +136,8 @@ class EthernetInterfacesMixin(UtilsMixin):
             )
 
         # TODO - check it if makes sense here
+        # TODO add option for Front Door VRF
+        # TODO check we are allowed to use Front Door VRF lingua ;)
         if self.shared_utils.wan:
             for transport in get(self.shared_utils.switch_data_combined, "transports", []):
                 ethernet_interface = {
@@ -144,18 +146,19 @@ class EthernetInterfacesMixin(UtilsMixin):
                     "type": "routed",
                     "shutdown": False,  # TODO: allow to shut them down ;)
                 }
-                if transport.get("ip_address") is not None:
-                    ethernet_interface["ip_address"] = transport["ip_address"]
+                if transport.get("public_ip") is not None:
+                    # TODO - better way to not hardcode this mask ... probably public_ip expect a mask
+                    ethernet_interface["ip_address"] = transport["public_ip"] + "/24"
                 else:
                     ethernet_interface["ip_address"] = "dhcp"
                     ethernet_interface["dhcp_client_accept_default_route"] = True
-            append_if_not_duplicate(
-                list_of_dicts=ethernet_interfaces,
-                primary_key="name",
-                new_dict=ethernet_interface,
-                context="Ethernet Interfaces defined for underlay",
-                context_keys=["name"],
-            )
+                append_if_not_duplicate(
+                    list_of_dicts=ethernet_interfaces,
+                    primary_key="name",
+                    new_dict=ethernet_interface,
+                    context="Ethernet Interfaces defined for underlay",
+                    context_keys=["name"],
+                )
 
         if ethernet_interfaces:
             return ethernet_interfaces
