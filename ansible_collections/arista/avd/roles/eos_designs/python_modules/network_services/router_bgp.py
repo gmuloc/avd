@@ -126,7 +126,7 @@ class RouterBgpMixin(UtilsMixin):
 
         TODO: Optimize this to allow bgp VRF config without overlays (vtep or mpls)
         """
-        if not (self.shared_utils.overlay_vtep or self.shared_utils.overlay_ler):
+        if not (self.shared_utils.overlay_vtep or self.shared_utils.overlay_ler or self.shared_utils.wan):
             return None
 
         if not self.shared_utils.network_services_l3:

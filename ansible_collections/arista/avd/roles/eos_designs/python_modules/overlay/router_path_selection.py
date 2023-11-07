@@ -81,9 +81,22 @@ class RouterPathSelectionMixin(UtilsMixin):
     def _get_local_interfaces(self, transport: dict) -> dict | None:
         """
         TODO - handle multiples interfaces ?
-        TODO - add STUN where required
+        TODO - handle multiples stun profiles
         """
-        return [{"name": transport.get("interface")}]
+        local_interface = {"name": transport.get("interface")}
+        if self.shared_utils.type not in ["pathfinders", "rr"]:
+            # This MUST be made better
+            for wan_route_reflector, data in self._wan_route_reflectors.items():
+                for wr_transport in data.get("transports"):
+                    router_transports_name = [wr_transport["name"] for transport in get(self.shared_utils.switch_data_combined, "transports", [])]
+                    if transport["name"] not in router_transports_name:
+                        continue
+                    # This stun profile name should probably be a fact to avoid having it underlay/stun.py and here in
+                    # for manageability
+                    stun_profile_name = f"{wan_route_reflector}-{transport['name']}"
+                    local_interface["stun"] = {"server_profiles": [stun_profile_name]}
+
+        return [local_interface]
 
     def _get_dynamic_peers(self) -> dict | None:
         """ """

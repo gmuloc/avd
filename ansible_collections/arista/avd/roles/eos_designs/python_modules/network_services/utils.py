@@ -59,6 +59,10 @@ class UtilsMixin(UtilsFilteredTenantsMixin):
         if not (self.shared_utils.network_services_l3 and self.shared_utils.overlay_vtep and self.shared_utils.overlay_evpn):
             return False
 
+        # TODO - this is a hack for WAN
+        if self.shared_utils.wan:
+            return False
+
         for tenant in self._filtered_tenants:
             if (vrf_default := get_item(tenant["vrfs"], "name", "default")) is None:
                 continue

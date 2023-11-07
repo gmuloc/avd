@@ -138,6 +138,9 @@ DEFAULT_NODE_TYPE_KEYS = {
             "default_evpn_role": "server",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
+            "network_services": {
+                "l3": True,
+            },
         },
         {
             "key": "rr",
@@ -146,6 +149,9 @@ DEFAULT_NODE_TYPE_KEYS = {
             "default_evpn_role": "server",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
+            "network_services": {
+                "l3": True,
+            },
         },
         {
             "key": "edge",

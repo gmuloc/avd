@@ -45,6 +45,10 @@ class RouterBgpMixin(UtilsMixin):
         return strip_empties_from_dict(router_bgp, strip_values_tuple=(None, ""))
 
     def _bgp_cluster_id(self) -> str | None:
+        # TODO - make this better
+        if self.shared_utils.wan:
+            return None
+
         if self.shared_utils.overlay_routing_protocol == "ibgp":
             if self.shared_utils.evpn_role == "server" or self.shared_utils.mpls_overlay_role == "server":
                 return get(self.shared_utils.switch_data_combined, "bgp_cluster_id", default=self.shared_utils.router_id)
@@ -65,6 +69,7 @@ class RouterBgpMixin(UtilsMixin):
             {
                 "prefix": self.shared_utils.loopback_ipv4_pool,
                 "peer_group": "autovpnEdges",
+                "remote_as": self.shared_utils.bgp_as,
             }
         ]
 
@@ -455,6 +460,11 @@ class RouterBgpMixin(UtilsMixin):
                 for route_client, data in natural_sort(self._evpn_route_clients.items()):
                     neighbor = self._create_neighbor(data["ip_address"], route_client, self.shared_utils.bgp_peer_groups["evpn_overlay_peers"]["name"])
                     neighbors.append(neighbor)
+            if self.shared_utils.wan:
+                if self.shared_utils.type not in ["pathfinders", "rr"]:
+                    for wan_route_reflector, data in self._wan_route_reflectors.items():
+                        neighbor = self._create_neighbor(data["ip_address"], wan_route_reflector, self.shared_utils.bgp_peer_groups["pathfinders"]["name"])
+                        neighbors.append(neighbor)
 
         for ipvpn_gw_peer, data in natural_sort(self._ipvpn_gateway_remote_peers.items()):
             neighbor = self._create_neighbor(
