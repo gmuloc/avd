@@ -33,6 +33,21 @@ class OverlayMixin:
             return get(self.switch_data_combined, "evpn_role", default=default_evpn_role)
         return None
 
+    # TODO - why do we use "none" rather than None for evpn and mpls?
+    @cached_property
+    def avt_role(self: SharedUtils) -> str | None:
+        if self.underlay_router is True:
+            default_evpn_role = get(self.node_type_key_data, "default_evpn_role", default=None)
+            return get(self.switch_data_combined, "evpn_role", default=default_evpn_role)
+        return None
+
+    @cached_property
+    def autovpn_role(self: SharedUtils) -> str | None:
+        if self.underlay_router is True:
+            default_autovpn_role = get(self.node_type_key_data, "default_autovpn_role", default=None)
+            return get(self.switch_data_combined, "autovpn_role", default=default_autovpn_role)
+        return None
+
     @cached_property
     def mpls_overlay_role(self: SharedUtils) -> str | None:
         if self.underlay_router is True:

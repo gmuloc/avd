@@ -126,7 +126,7 @@ class RouterBgpMixin(UtilsMixin):
 
         TODO: Optimize this to allow bgp VRF config without overlays (vtep or mpls)
         """
-        if not (self.shared_utils.overlay_vtep or self.shared_utils.overlay_ler or self.shared_utils.wan):
+        if not (self.shared_utils.overlay_vtep or self.shared_utils.overlay_ler or self.shared_utils.autovpn_role):
             return None
 
         if not self.shared_utils.network_services_l3:
@@ -162,35 +162,40 @@ class RouterBgpMixin(UtilsMixin):
                     else:
                         target["route_targets"].append(rt["route_target"])
 
-                if vrf_name == "default" and self._vrf_default_evpn and self._vrf_default_ipv4_subnets:
+                if vrf_name == "default":
                     # Special handling of vrf default.
+                    #
+                    if self.shared_utils.autovpn_role:
+                        # Do nothing for WAN
+                        continue
 
-                    if (target := get_item(route_targets["export"], "address_family", "evpn")) is None:
-                        route_targets["export"].append({"address_family": "evpn", "route_targets": ["route-map RM-EVPN-EXPORT-VRF-DEFAULT"]})
-                    else:
-                        target.setdefault("route_targets", []).append("route-map RM-EVPN-EXPORT-VRF-DEFAULT")
+                    if self._vrf_default_evpn and self._vrf_default_ipv4_subnets:
+                        if (target := get_item(route_targets["export"], "address_family", "evpn")) is None:
+                            route_targets["export"].append({"address_family": "evpn", "route_targets": ["route-map RM-EVPN-EXPORT-VRF-DEFAULT"]})
+                        else:
+                            target.setdefault("route_targets", []).append("route-map RM-EVPN-EXPORT-VRF-DEFAULT")
 
-                    bgp_vrf = {
-                        "name": vrf_name,
-                        "rd": vrf_rd,
-                        "route_targets": route_targets,
-                        "eos_cli": get(vrf, "bgp.raw_eos_cli"),
-                        "struct_cfg": get(vrf, "bgp.structured_config"),
-                    }
-                    # Strip None values from vlan before appending
-                    bgp_vrf = {key: value for key, value in bgp_vrf.items() if value is not None}
+                        bgp_vrf = {
+                            "name": vrf_name,
+                            "rd": vrf_rd,
+                            "route_targets": route_targets,
+                            "eos_cli": get(vrf, "bgp.raw_eos_cli"),
+                            "struct_cfg": get(vrf, "bgp.structured_config"),
+                        }
+                        # Strip None values from vlan before appending
+                        bgp_vrf = {key: value for key, value in bgp_vrf.items() if value is not None}
 
-                    append_if_not_duplicate(
-                        list_of_dicts=vrfs,
-                        primary_key="name",
-                        new_dict=bgp_vrf,
-                        context="BGP VRFs defined under network services",
-                        context_keys=["name"],
-                    )
+                        append_if_not_duplicate(
+                            list_of_dicts=vrfs,
+                            primary_key="name",
+                            new_dict=bgp_vrf,
+                            context="BGP VRFs defined under network services",
+                            context_keys=["name"],
+                        )
 
-                    continue
+                        continue
 
-                # Regular VRF handling (not "default" with EVPN)
+                # Regular VRF handling (not "default" with EVPN or "default" in WAN case)
                 bgp_vrf = {
                     "name": vrf_name,
                     "router_id": self.shared_utils.router_id,

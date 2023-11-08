@@ -83,19 +83,21 @@ vlan internal order ascending range 1006 1199
 
 | Policy name | Local ID |
 | ----------- | -------- |
+| dataPlaneIkePolicy | 192.168.42.3 |
 | IKEAUTOVPN | 192.168.42.3 |
 
 ### IPSec profiles
 
 | Profile name | IKE policy | SA policy | Connection | DPD Interval | DPD Time | DPD action | Mode |
 | ------------ | ---------- | ----------| ---------- | ------------ | -------- | ---------- | ---- |
+| dataPlaneIpsecProfile | dataPlaneIkePolicy | dataPlaneSaPolicy | start | - | - | - | transport |
 | AUTOVPNTUNNEL | IKEAUTOVPN | SAAUTOVPN | start | - | - | - | transport |
 
 ### Key controller
 
 | Profile name |
 | ------------ |
-| AUTOVPNTUNNEL |
+| dataPlaneIpsecProfile |
 
 ### IP Security Configuration
 
@@ -103,10 +105,23 @@ vlan internal order ascending range 1006 1199
 !
 ip security
    !
+   ike policy dataPlaneIkePolicy
+      local-id 192.168.42.3
+   !
    ike policy IKEAUTOVPN
       local-id 192.168.42.3
    !
+   sa policy dataPlaneSaPolicy
+   !
    sa policy SAAUTOVPN
+   !
+   profile dataPlaneIpsecProfile
+      ike-policy dataPlaneIkePolicy
+      sa-policy dataPlaneSaPolicy
+      connection start
+      shared-key 7 0112140D481F07123713705
+      dpd 10 50 clear
+      mode transport
    !
    profile AUTOVPNTUNNEL
       ike-policy IKEAUTOVPN
@@ -117,7 +132,7 @@ ip security
       mode transport
    !
    key controller
-      profile AUTOVPNTUNNEL
+      profile dataPlaneIpsecProfile
 ```
 
 ## Interfaces
@@ -152,12 +167,20 @@ interface Dps1
 
 | Interface | Description | Type | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | -----| ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Ethernet1 | WAN_MPLS-1 | routed | - | dhcp | default | - | False | - | - |
 | Ethernet2 | WAN_MPLS-2 | routed | - | dhcp | default | - | False | - | - |
 | Ethernet4 | Client LAN Network | routed | - | 192.168.1.1/24 | SE_LAB | - | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
+!
+interface Ethernet1
+   description WAN_MPLS-1
+   no shutdown
+   no switchport
+   ip address dhcp
+   dhcp client accept default-route
 !
 interface Ethernet2
    description WAN_MPLS-2
@@ -283,7 +306,7 @@ ip routing vrf SE_LAB
 
 #### Router BGP Peer Groups
 
-##### PATHFINDERS
+##### WAN-OVERLAY-PEERS
 
 | Settings | Value |
 | -------- | ----- |
@@ -293,13 +316,20 @@ ip routing vrf SE_LAB
 | Send community | all |
 | Maximum routes | 12000 |
 
+#### BGP Neighbors
+
+| Neighbor | Remote AS | VRF | Shutdown | Send-community | Maximum-routes | Allowas-in | BFD | RIB Pre-Policy Retain | Route-Reflector Client | Passive |
+| -------- | --------- | --- | -------- | -------------- | -------------- | ---------- | --- | --------------------- | ---------------------- | ------- |
+| 192.168.42.1 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+| 192.168.42.2 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+
 #### Router BGP EVPN Address Family
 
 ##### EVPN Peer Groups
 
 | Peer Group | Activate | Encapsulation |
 | ---------- | -------- | ------------- |
-| PATHFINDERS | True | default |
+| WAN-OVERLAY-PEERS | True | default |
 
 #### Router BGP Path-Selection Address Family
 
@@ -307,7 +337,13 @@ ip routing vrf SE_LAB
 
 | Peer Group | Activate |
 | ---------- | -------- |
-| PATHFINDERS | True |
+| WAN-OVERLAY-PEERS | True |
+
+#### Router BGP VRFs
+
+| VRF | Route-Distinguisher | Redistribute |
+| --- | ------------------- | ------------ |
+| SE_LAB | 192.168.42.3:201 | connected |
 
 #### Router BGP Device Configuration
 
@@ -318,24 +354,34 @@ router bgp 65000
    maximum-paths 4 ecmp 4
    update wait-install
    no bgp default ipv4-unicast
-   neighbor PATHFINDERS peer group
-   neighbor PATHFINDERS remote-as 65000
-   neighbor PATHFINDERS update-source Loopback0
-   neighbor PATHFINDERS password 7 <removed>
-   neighbor PATHFINDERS send-community
-   neighbor PATHFINDERS maximum-routes 12000
+   neighbor WAN-OVERLAY-PEERS peer group
+   neighbor WAN-OVERLAY-PEERS remote-as 65000
+   neighbor WAN-OVERLAY-PEERS update-source Loopback0
+   neighbor WAN-OVERLAY-PEERS password 7 <removed>
+   neighbor WAN-OVERLAY-PEERS send-community
+   neighbor WAN-OVERLAY-PEERS maximum-routes 12000
+   neighbor 192.168.42.1 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.1 description rr1
+   neighbor 192.168.42.2 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.2 description rr2
    !
    address-family evpn
-      neighbor PATHFINDERS activate
+      neighbor WAN-OVERLAY-PEERS activate
    !
    address-family ipv4
-      no neighbor EVPN-OVERLAY-PEERS activate
-      no neighbor PATHFINDERS activate
+      no neighbor WAN-OVERLAY-PEERS activate
    !
    address-family path-selection
-      neighbor PATHFINDERS activate
-      neighbor PATHFINDERS additional-paths receive
-      neighbor PATHFINDERS additional-paths send any
+      neighbor WAN-OVERLAY-PEERS activate
+      neighbor WAN-OVERLAY-PEERS additional-paths receive
+      neighbor WAN-OVERLAY-PEERS additional-paths send any
+   !
+   vrf SE_LAB
+      rd 192.168.42.3:201
+      route-target import evpn 201:201
+      route-target export evpn 201:201
+      router-id 192.168.42.3
+      redistribute connected
 ```
 
 ## BFD
@@ -404,7 +450,7 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet1 | - |  |
+| Ethernet1 | - | rr1-MPLS-1-1 |
 
 ###### Dynamic peers settings
 
@@ -430,7 +476,7 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet2 | - |  |
+| Ethernet2 | - | rr2-MPLS-2-1 |
 
 ###### Dynamic peers settings
 
@@ -482,6 +528,7 @@ router path-selection
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet1
+         stun server-profile rr1-MPLS-1-1
       !
       peer dynamic
       !
@@ -493,6 +540,7 @@ router path-selection
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet2
+         stun server-profile rr2-MPLS-2-1
       !
       peer dynamic
       !
@@ -527,8 +575,8 @@ router path-selection
 
 | Server Profile | IP address |
 | -------------- | ---------- |
-| rr1-MPLS-1 | 10.1.0.72 |
-| rr2-MPLS-2 | 10.2.0.72 |
+| rr1-MPLS-1-1 | 10.1.0.72 |
+| rr2-MPLS-2-1 | 10.2.0.72 |
 
 ### STUN Device Configuration
 
@@ -536,8 +584,8 @@ router path-selection
 !
 stun
    client
-      server-profile rr1-MPLS-1
+      server-profile rr1-MPLS-1-1
          ip address 10.1.0.72
-      server-profile rr2-MPLS-2
+      server-profile rr2-MPLS-2-1
          ip address 10.2.0.72
 ```

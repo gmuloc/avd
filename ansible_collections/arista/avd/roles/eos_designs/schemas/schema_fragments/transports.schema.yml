@@ -29,6 +29,9 @@ keys:
             - always_use
             - backup
             - never_use
+        path_group_id:
+          type: str
+          description: Optional path_group_id. Auto generated if ommitted.
         accessibility:
           type: str
           description: TODO

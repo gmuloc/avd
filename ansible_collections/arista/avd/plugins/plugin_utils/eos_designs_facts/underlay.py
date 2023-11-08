@@ -30,8 +30,7 @@ class UnderlayMixin:
         if not self.shared_utils.underlay_router:
             return []
 
-        if self.shared_utils.type in ["edge", "transit"]:
-            # TODO - there MUST be a better way but it is 1am
+        if self.shared_utils.autovpn_role == "client":
             return get(self.shared_utils.switch_data_combined, "wan_route_reflectors")
 
         return []
@@ -41,13 +40,12 @@ class UnderlayMixin:
         """
         Exposed in avd_switch_facts
 
-        # TODO
         """
+        # TODO - is it used anywhere?
         if not self.shared_utils.underlay_router:
             return []
 
-        if self.shared_utils.type in ["rr", "pathfinders"]:
-            # TODO - there MUST be a better way but it is 1am
+        if self.shared_utils.autovpn_role == "server":
             return get(self.shared_utils.switch_data_combined, "transports")
 
         return []

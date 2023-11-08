@@ -17,15 +17,31 @@ keys:
         type: dict
         description: |-
           Control Plan profile configuration.
-          TODO add other overwriting options later.
         keys:
+          ike_policy_name:
+            type: str
+            default: controlPlaneIkePolicy
+          sa_policy_name:
+            type: str
+            default: controlPlaneSaPolicy
+          profile_name:
+            type: str
+            default: controlPlaneIpsecProfile
           ipsec_key:
             type: str
       data_plane:
         type: dict
         description: |-
           Data Plan profile configuration.
-          TODO add other overwriting options later.
         keys:
+          ike_policy_name:
+            type: str
+            default: dataPlaneIkePolicy
+          sa_policy_name:
+            type: str
+            default: dataPlaneSaPolicy
+          profile_name:
+            type: str
+            default: dataPlaneIpsecProfile
           ipsec_key:
             type: str

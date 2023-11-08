@@ -15,12 +15,9 @@ default_node_types:
 bgp_as: 65000
 
 # BGP peer groups
-# TODO - fix some stuff here
 bgp_peer_groups:
-  autovpn_edges:
-    password: "SHsTgDgjVUU5a9blyxSt3Q=="
-  pathfinders:
-    password: "SHsTgDgjVUU5a9blyxSt3Q=="
+  wan_overlay_peers:
+    password: "htm4AZe9mIQOO1uiMuGgYQ=="
 
 # Route-reflectors
 rr:
@@ -33,17 +30,20 @@ rr:
       id: 1
       transports:
         - name: MPLS-1
-          interface: Ethernet1
-          public_ip: 10.1.0.72
+          interfaces:
+            - name: Ethernet1
+              ip_address: 10.1.0.72/24
     - name: rr2
       id: 2
       transports:
         - name: MPLS-2
-          interface: Ethernet2
-          public_ip: 10.2.0.72
+          interfaces:
+            - name: Ethernet2
+              ip_address: 10.2.0.72/24
         - name: INTERNET
-          interface: Ethernet3
-          public_ip: 104.197.58.72
+          interfaces:
+            - name: Ethernet3
+              ip_address: 104.197.58.72
 
 # Edge
 edge:
@@ -58,21 +58,26 @@ edge:
       id: 1
       transports:
         - name: MPLS-1
-          interface: Ethernet1
+          interfaces:
+            - name: Ethernet1
         - name: MPLS-2
-          interface: Ethernet2
+          interfaces:
+            - name: Ethernet2
     - name: edge2
       id: 2
       transports:
         - name: MPLS-1
-          interface: Ethernet1
+          interfaces:
+            - name: Ethernet1
         - name: INTERNET
-          interface: Ethernet3
+          interfaces:
+            - name: Ethernet3
     - name: edge3
       id: 3
       transports:
         - name: INTERNET
-          interface: Ethernet3
+          interfaces:
+            - name: Ethernet3
 
 # Transports
 transports:
@@ -89,6 +94,9 @@ transports:
 # AUTOVPN configuration
 autovpn:
   control_plane:
+    ike_policy_name: IKEAUTOVPN
+    sa_policy_name: SAAUTOVPN
+    profile_name: AUTOVPNTUNNEL
     ipsec_key: 0112140D481F07
   data_plane:
     ipsec_key: 0112140D481F07123713705

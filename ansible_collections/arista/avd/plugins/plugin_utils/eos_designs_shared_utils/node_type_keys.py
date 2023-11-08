@@ -134,7 +134,8 @@ DEFAULT_NODE_TYPE_KEYS = {
         {
             "key": "pathfinder",
             "type": "pathfinder",
-            "wan": True,
+            "default_avt_role": "pathfinder",
+            "default_autovpn_role": "server",
             "default_evpn_role": "server",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
@@ -145,7 +146,7 @@ DEFAULT_NODE_TYPE_KEYS = {
         {
             "key": "rr",
             "type": "rr",
-            "wan": True,
+            "default_autovpn_role": "server",
             "default_evpn_role": "server",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
@@ -156,7 +157,8 @@ DEFAULT_NODE_TYPE_KEYS = {
         {
             "key": "edge",
             "type": "edge",
-            "wan": True,
+            "default_avt_role": "edge",
+            "default_autovpn_role": "client",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
             "connected_endpoints": True,
@@ -170,7 +172,8 @@ DEFAULT_NODE_TYPE_KEYS = {
         {
             "key": "transit",
             "type": "transit",
-            "wan": True,
+            "default_avt_role": "transit",
+            "default_autovpn_role": "client",
             "default_overlay_routing_protocol": "ibgp",
             "default_underlay_routing_protocol": "none",
             "connected_endpoints": True,

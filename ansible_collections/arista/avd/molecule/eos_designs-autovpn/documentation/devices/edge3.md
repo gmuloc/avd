@@ -83,19 +83,21 @@ vlan internal order ascending range 1006 1199
 
 | Policy name | Local ID |
 | ----------- | -------- |
+| dataPlaneIkePolicy | 192.168.42.5 |
 | IKEAUTOVPN | 192.168.42.5 |
 
 ### IPSec profiles
 
 | Profile name | IKE policy | SA policy | Connection | DPD Interval | DPD Time | DPD action | Mode |
 | ------------ | ---------- | ----------| ---------- | ------------ | -------- | ---------- | ---- |
+| dataPlaneIpsecProfile | dataPlaneIkePolicy | dataPlaneSaPolicy | start | - | - | - | transport |
 | AUTOVPNTUNNEL | IKEAUTOVPN | SAAUTOVPN | start | - | - | - | transport |
 
 ### Key controller
 
 | Profile name |
 | ------------ |
-| AUTOVPNTUNNEL |
+| dataPlaneIpsecProfile |
 
 ### IP Security Configuration
 
@@ -103,10 +105,23 @@ vlan internal order ascending range 1006 1199
 !
 ip security
    !
+   ike policy dataPlaneIkePolicy
+      local-id 192.168.42.5
+   !
    ike policy IKEAUTOVPN
       local-id 192.168.42.5
    !
+   sa policy dataPlaneSaPolicy
+   !
    sa policy SAAUTOVPN
+   !
+   profile dataPlaneIpsecProfile
+      ike-policy dataPlaneIkePolicy
+      sa-policy dataPlaneSaPolicy
+      connection start
+      shared-key 7 0112140D481F07123713705
+      dpd 10 50 clear
+      mode transport
    !
    profile AUTOVPNTUNNEL
       ike-policy IKEAUTOVPN
@@ -117,7 +132,7 @@ ip security
       mode transport
    !
    key controller
-      profile AUTOVPNTUNNEL
+      profile dataPlaneIpsecProfile
 ```
 
 ## Interfaces
@@ -283,7 +298,7 @@ ip routing vrf SE_LAB
 
 #### Router BGP Peer Groups
 
-##### PATHFINDERS
+##### WAN-OVERLAY-PEERS
 
 | Settings | Value |
 | -------- | ----- |
@@ -293,13 +308,20 @@ ip routing vrf SE_LAB
 | Send community | all |
 | Maximum routes | 12000 |
 
+#### BGP Neighbors
+
+| Neighbor | Remote AS | VRF | Shutdown | Send-community | Maximum-routes | Allowas-in | BFD | RIB Pre-Policy Retain | Route-Reflector Client | Passive |
+| -------- | --------- | --- | -------- | -------------- | -------------- | ---------- | --- | --------------------- | ---------------------- | ------- |
+| 192.168.42.1 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+| 192.168.42.2 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+
 #### Router BGP EVPN Address Family
 
 ##### EVPN Peer Groups
 
 | Peer Group | Activate | Encapsulation |
 | ---------- | -------- | ------------- |
-| PATHFINDERS | True | default |
+| WAN-OVERLAY-PEERS | True | default |
 
 #### Router BGP Path-Selection Address Family
 
@@ -307,7 +329,13 @@ ip routing vrf SE_LAB
 
 | Peer Group | Activate |
 | ---------- | -------- |
-| PATHFINDERS | True |
+| WAN-OVERLAY-PEERS | True |
+
+#### Router BGP VRFs
+
+| VRF | Route-Distinguisher | Redistribute |
+| --- | ------------------- | ------------ |
+| SE_LAB | 192.168.42.5:201 | connected |
 
 #### Router BGP Device Configuration
 
@@ -318,24 +346,34 @@ router bgp 65000
    maximum-paths 4 ecmp 4
    update wait-install
    no bgp default ipv4-unicast
-   neighbor PATHFINDERS peer group
-   neighbor PATHFINDERS remote-as 65000
-   neighbor PATHFINDERS update-source Loopback0
-   neighbor PATHFINDERS password 7 <removed>
-   neighbor PATHFINDERS send-community
-   neighbor PATHFINDERS maximum-routes 12000
+   neighbor WAN-OVERLAY-PEERS peer group
+   neighbor WAN-OVERLAY-PEERS remote-as 65000
+   neighbor WAN-OVERLAY-PEERS update-source Loopback0
+   neighbor WAN-OVERLAY-PEERS password 7 <removed>
+   neighbor WAN-OVERLAY-PEERS send-community
+   neighbor WAN-OVERLAY-PEERS maximum-routes 12000
+   neighbor 192.168.42.1 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.1 description rr1
+   neighbor 192.168.42.2 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.2 description rr2
    !
    address-family evpn
-      neighbor PATHFINDERS activate
+      neighbor WAN-OVERLAY-PEERS activate
    !
    address-family ipv4
-      no neighbor EVPN-OVERLAY-PEERS activate
-      no neighbor PATHFINDERS activate
+      no neighbor WAN-OVERLAY-PEERS activate
    !
    address-family path-selection
-      neighbor PATHFINDERS activate
-      neighbor PATHFINDERS additional-paths receive
-      neighbor PATHFINDERS additional-paths send any
+      neighbor WAN-OVERLAY-PEERS activate
+      neighbor WAN-OVERLAY-PEERS additional-paths receive
+      neighbor WAN-OVERLAY-PEERS additional-paths send any
+   !
+   vrf SE_LAB
+      rd 192.168.42.5:201
+      route-target import evpn 201:201
+      route-target export evpn 201:201
+      router-id 192.168.42.5
+      redistribute connected
 ```
 
 ## BFD
@@ -404,7 +442,7 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet3 | - |  |
+| Ethernet3 | - | rr2-INTERNET-1 |
 
 ###### Dynamic peers settings
 
@@ -456,6 +494,7 @@ router path-selection
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet3
+         stun server-profile rr2-INTERNET-1
       !
       peer dynamic
       !
@@ -489,7 +528,7 @@ router path-selection
 
 | Server Profile | IP address |
 | -------------- | ---------- |
-| rr2-INTERNET | 104.197.58.72 |
+| rr2-INTERNET-1 | 104.197.58.72 |
 
 ### STUN Device Configuration
 
@@ -497,6 +536,6 @@ router path-selection
 !
 stun
    client
-      server-profile rr2-INTERNET
+      server-profile rr2-INTERNET-1
          ip address 104.197.58.72
 ```

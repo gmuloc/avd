@@ -13,18 +13,32 @@ keys:
     keys:
       control_plane:
         type: dict
-        description: 'Control Plan profile configuration.
-
-          TODO add other overwriting options later.'
+        description: Control Plan profile configuration.
         keys:
+          ike_policy_name:
+            type: str
+            default: controlPlaneIkePolicy
+          sa_policy_name:
+            type: str
+            default: controlPlaneSaPolicy
+          profile_name:
+            type: str
+            default: controlPlaneIpsecProfile
           ipsec_key:
             type: str
       data_plane:
         type: dict
-        description: 'Data Plan profile configuration.
-
-          TODO add other overwriting options later.'
+        description: Data Plan profile configuration.
         keys:
+          ike_policy_name:
+            type: str
+            default: dataPlaneIkePolicy
+          sa_policy_name:
+            type: str
+            default: dataPlaneSaPolicy
+          profile_name:
+            type: str
+            default: dataPlaneIpsecProfile
           ipsec_key:
             type: str
   avd_data_conversion_mode:
@@ -348,6 +362,26 @@ keys:
             documentation_options:
               hide_keys: true
             $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
+      wan_overlay_peers:
+        type: dict
+        keys:
+          name:
+            type: str
+            default: WAN-OVERLAY-PEERS
+            description: Name of peer group.
+          password:
+            type: str
+            description: Type 7 encrypted password.
+          bfd:
+            type: bool
+            default: false
+          structured_config:
+            type: dict
+            description: Custom structured config added under router_bgp.peer_groups.[name=<name>]
+              for eos_cli_config_gen.
+            documentation_options:
+              hide_keys: true
+            $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
       IPv4_UNDERLAY_PEERS:
         type: dict
         deprecation:
@@ -369,46 +403,6 @@ keys:
           new_key: bgp_peer_groups.evpn_overlay_peers
           removed: true
           remove_in_version: 4.0.0
-      autovpn_edges:
-        type: dict
-        keys:
-          name:
-            type: str
-            default: AUTOVPN_EDGES
-            description: Name of peer group.
-          password:
-            type: str
-            description: Type 7 encrypted password.
-          bfd:
-            type: bool
-            default: false
-          structured_config:
-            type: dict
-            description: Custom structured config added under router_bgp.peer_groups.[name=<name>]
-              for eos_cli_config_gen.
-            documentation_options:
-              hide_keys: true
-            $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
-      pathfinders:
-        type: dict
-        keys:
-          name:
-            type: str
-            default: PATHFINDERS
-            description: Name of peer group.
-          password:
-            type: str
-            description: Type 7 encrypted password.
-          bfd:
-            type: bool
-            default: false
-          structured_config:
-            type: dict
-            description: Custom structured config added under router_bgp.peer_groups.[name=<name>]
-              for eos_cli_config_gen.
-            documentation_options:
-              hide_keys: true
-            $ref: eos_cli_config_gen#/keys/router_bgp/keys/peer_groups/items/
   bgp_update_wait_install:
     documentation_options:
       table: bgp-settings
@@ -1532,10 +1526,19 @@ keys:
           type: bool
           default: false
           description: Is this switch an MPLS LSR.
-        wan:
-          type: bool
-          default: false
-          description: Is this switch a WAN device..
+        default_autovpn_role:
+          type: str
+          valid_values:
+          - client
+          - server
+          description: Default autovpn_role. Can be overridden in topology vars.
+        default_avt_role:
+          type: str
+          valid_values:
+          - pathfinder
+          - edge
+          - transit
+          description: Default avt_role. Can be overridden in topology vars.
         ip_addressing:
           type: dict
           description: Override ip_addressing templates.
@@ -2807,6 +2810,9 @@ keys:
           - always_use
           - backup
           - never_use
+        path_group_id:
+          type: str
+          description: Optional path_group_id. Auto generated if ommitted.
         accessibility:
           type: str
           description: TODO
@@ -6600,13 +6606,24 @@ $defs:
                 name:
                   type: str
                   description: Transport name.
-                interface:
-                  type: str
-                  description: Interface to connect to the transport -TODO can it
-                    be a list?
-                public_ip:
-                  type: str
-                  description: The public IP for the transport on the node.
+                interfaces:
+                  type: list
+                  primary_key: name
+                  items:
+                    type: dict
+                    keys:
+                      name:
+                        type: str
+                        description: Interface to connect to the transport
+                      ip_address:
+                        type: str
+                        description: 'The public IP for the transport on the node
+                          with mask.
+
+                          If not set, default to "dhcp"'
+                      shutdown:
+                        type: bool
+                        default: false
                 ipsec_enabled:
                   type: bool
                   default: true

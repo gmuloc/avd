@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
-
 from .utils import UtilsMixin
 
 
@@ -22,7 +20,7 @@ class RouterPathSelectionMixin(UtilsMixin):
         Return structured config for router path-selection (DPS)
         """
 
-        if not self.shared_utils.wan:
+        if not self.shared_utils.autovpn_role:
             return None
 
         if not self.shared_utils.network_services_l3:

@@ -15,8 +15,10 @@
   - [IPSec profiles](#ipsec-profiles)
   - [IP Security Configuration](#ip-security-configuration)
 - [Interfaces](#interfaces)
+  - [DPS Interfaces](#dps-interfaces)
   - [Ethernet Interfaces](#ethernet-interfaces)
   - [Loopback Interfaces](#loopback-interfaces)
+  - [VXLAN Interface](#vxlan-interface)
 - [Routing](#routing)
   - [Service Routing Protocols Model](#service-routing-protocols-model)
   - [IP Routing](#ip-routing)
@@ -94,12 +96,14 @@ vlan internal order ascending range 1006 1199
 
 | Policy name | Local ID |
 | ----------- | -------- |
+| dataPlaneIkePolicy | 192.168.42.2 |
 | IKEAUTOVPN | 192.168.42.2 |
 
 ### IPSec profiles
 
 | Profile name | IKE policy | SA policy | Connection | DPD Interval | DPD Time | DPD action | Mode |
 | ------------ | ---------- | ----------| ---------- | ------------ | -------- | ---------- | ---- |
+| dataPlaneIpsecProfile | dataPlaneIkePolicy | dataPlaneSaPolicy | start | - | - | - | transport |
 | AUTOVPNTUNNEL | IKEAUTOVPN | SAAUTOVPN | start | - | - | - | transport |
 
 ### IP Security Configuration
@@ -108,10 +112,23 @@ vlan internal order ascending range 1006 1199
 !
 ip security
    !
+   ike policy dataPlaneIkePolicy
+      local-id 192.168.42.2
+   !
    ike policy IKEAUTOVPN
       local-id 192.168.42.2
    !
+   sa policy dataPlaneSaPolicy
+   !
    sa policy SAAUTOVPN
+   !
+   profile dataPlaneIpsecProfile
+      ike-policy dataPlaneIkePolicy
+      sa-policy dataPlaneSaPolicy
+      connection start
+      shared-key 7 0112140D481F07123713705
+      dpd 10 50 clear
+      mode transport
    !
    profile AUTOVPNTUNNEL
       ike-policy IKEAUTOVPN
@@ -123,6 +140,21 @@ ip security
 ```
 
 ## Interfaces
+
+### DPS Interfaces
+
+#### DPS Interfaces Summary
+
+| Interface | IP address | Shutdown | MTU | Flow tracker(s) | TCP MSS Ceiling |
+| --------- | ---------- | -------- | --- | --------------- | --------------- |
+| Dps1 | - | - | - |  |  |
+
+#### DPS Interfaces Device Configuration
+
+```eos
+!
+interface Dps1
+```
 
 ### Ethernet Interfaces
 
@@ -139,18 +171,24 @@ ip security
 
 | Interface | Description | Type | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | -----| ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
-| Ethernet3 | WAN_INTERNET | routed | - | dhcp | default | - | False | - | - |
+| Ethernet2 | WAN_MPLS-2 | routed | - | 10.2.0.72/24 | default | - | False | - | - |
+| Ethernet3 | WAN_INTERNET | routed | - | 104.197.58.72 | default | - | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
 !
+interface Ethernet2
+   description WAN_MPLS-2
+   no shutdown
+   no switchport
+   ip address 10.2.0.72/24
+!
 interface Ethernet3
    description WAN_INTERNET
    no shutdown
    no switchport
-   ip address dhcp
-   dhcp client accept default-route
+   ip address 104.197.58.72
 ```
 
 ### Loopback Interfaces
@@ -178,6 +216,25 @@ interface Loopback0
    description EVPN_Overlay_Peering
    no shutdown
    ip address 192.168.42.2/32
+```
+
+### VXLAN Interface
+
+#### VXLAN Interface Summary
+
+| Setting | Value |
+| ------- | ----- |
+| Source Interface | Loopback0 |
+| UDP port | 4789 |
+
+#### VXLAN Interface Device Configuration
+
+```eos
+!
+interface Vxlan1
+   description rr2_VTEP
+   vxlan source-interface Loopback0
+   vxlan udp-port 4789
 ```
 
 ## Routing
@@ -225,10 +282,6 @@ no ip routing vrf MGMT
 | ------ | --------- |
 | 65000 | 192.168.42.2 |
 
-| BGP AS | Cluster ID |
-| ------ | --------- |
-| 65000 | 192.168.42.2 |
-
 | BGP Tuning |
 | ---------- |
 | update wait-install |
@@ -239,10 +292,22 @@ no ip routing vrf MGMT
 
 | Prefix | Peer-ID Include Router ID | Peer Group | Peer-Filter | Remote-AS | VRF |
 | ------ | ------------------------- | ---------- | ----------- | --------- | --- |
+| 192.168.42.0/24 | - | WAN-OVERLAY-PEERS | - | 65000 | default |
 
 #### Router BGP Peer Groups
 
-##### autovpnEdges
+##### RR-OVERLAY-PEERS
+
+| Settings | Value |
+| -------- | ----- |
+| Address Family | wan |
+| Remote AS | 65000 |
+| Source | Loopback0 |
+| BFD | True |
+| Send community | all |
+| Maximum routes | 0 (no limit) |
+
+##### WAN-OVERLAY-PEERS
 
 | Settings | Value |
 | -------- | ----- |
@@ -259,7 +324,8 @@ no ip routing vrf MGMT
 
 | Peer Group | Activate | Encapsulation |
 | ---------- | -------- | ------------- |
-| autovpnEdges | True | default |
+| RR-OVERLAY-PEERS | True | default |
+| WAN-OVERLAY-PEERS | True | default |
 
 #### Router BGP Path-Selection Address Family
 
@@ -267,7 +333,7 @@ no ip routing vrf MGMT
 
 | Peer Group | Activate |
 | ---------- | -------- |
-| autovpnEdges | True |
+| WAN-OVERLAY-PEERS | True |
 
 #### Router BGP Device Configuration
 
@@ -278,28 +344,35 @@ router bgp 65000
    maximum-paths 4 ecmp 4
    update wait-install
    no bgp default ipv4-unicast
-   bgp cluster-id 192.168.42.2
-   neighbor autovpnEdges peer group
-   neighbor autovpnEdges remote-as 65000
-   neighbor autovpnEdges update-source Loopback0
-   neighbor autovpnEdges route-reflector-client
-   neighbor autovpnEdges password 7 <removed>
-   neighbor autovpnEdges send-community
-   neighbor autovpnEdges maximum-routes 12000
+   bgp listen range 192.168.42.0/24 peer-group WAN-OVERLAY-PEERS remote-as 65000
+   neighbor RR-OVERLAY-PEERS peer group
+   neighbor RR-OVERLAY-PEERS remote-as 65000
+   neighbor RR-OVERLAY-PEERS update-source Loopback0
+   neighbor RR-OVERLAY-PEERS bfd
+   neighbor RR-OVERLAY-PEERS send-community
+   neighbor RR-OVERLAY-PEERS maximum-routes 0
+   neighbor WAN-OVERLAY-PEERS peer group
+   neighbor WAN-OVERLAY-PEERS remote-as 65000
+   neighbor WAN-OVERLAY-PEERS update-source Loopback0
+   neighbor WAN-OVERLAY-PEERS route-reflector-client
+   neighbor WAN-OVERLAY-PEERS password 7 <removed>
+   neighbor WAN-OVERLAY-PEERS send-community
+   neighbor WAN-OVERLAY-PEERS maximum-routes 12000
    !
    address-family evpn
-      neighbor autovpnEdges activate
+      neighbor RR-OVERLAY-PEERS activate
+      neighbor WAN-OVERLAY-PEERS activate
    !
    address-family ipv4
-      no neighbor autovpnEdges activate
-      no neighbor EVPN-OVERLAY-PEERS activate
+      no neighbor RR-OVERLAY-PEERS activate
+      no neighbor WAN-OVERLAY-PEERS activate
    !
    address-family path-selection
       bgp additional-paths receive
       bgp additional-paths send any
-      neighbor autovpnEdges activate
-      neighbor autovpnEdges additional-paths receive
-      neighbor autovpnEdges additional-paths send any
+      neighbor WAN-OVERLAY-PEERS activate
+      neighbor WAN-OVERLAY-PEERS additional-paths receive
+      neighbor WAN-OVERLAY-PEERS additional-paths send any
 ```
 
 ## BFD

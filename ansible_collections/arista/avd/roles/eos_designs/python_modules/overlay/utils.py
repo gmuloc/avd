@@ -277,3 +277,9 @@ class UtilsMixin:
             "router_id": peer_facts.get("router_id"),
             "transports": peer_facts.get("wan_transports"),
         }
+
+    def _stun_server_profile_name(self, autovpn_server_name: str, transport: str, id: int = 1) -> str:
+        """
+        Return a string to use as the name of the stun server_profile
+        """
+        return f"{autovpn_server_name}-{transport}-{id}"

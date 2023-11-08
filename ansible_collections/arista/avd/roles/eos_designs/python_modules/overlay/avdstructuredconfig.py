@@ -5,22 +5,26 @@ from ansible_collections.arista.avd.plugins.plugin_utils.avdfacts import AvdFact
 
 from .cvx import CvxMixin
 from .ip_extcommunity_lists import IpExtCommunityListsMixin
+from .ip_security import IPSecMixin
 from .management_cvx import ManagementCvxMixin
 from .route_maps import RouteMapsMixin
 from .router_bfd import RouterBfdMixin
 from .router_bgp import RouterBgpMixin
 from .router_path_selection import RouterPathSelectionMixin
+from .stun import StunMixin
 
 
 class AvdStructuredConfigOverlay(
     AvdFacts,
     CvxMixin,
     IpExtCommunityListsMixin,
+    IPSecMixin,
     ManagementCvxMixin,
     RouterBfdMixin,
     RouterBgpMixin,
     RouteMapsMixin,
     RouterPathSelectionMixin,
+    StunMixin,
 ):
     """
     The AvdStructuredConfig Class is imported used "get_structured_config" to render parts of the structured config.

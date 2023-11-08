@@ -34,17 +34,14 @@ class VxlanInterfaceMixin(UtilsMixin):
         This function also detects duplicate VNIs and raise an error in case of duplicates between
         all Network Services deployed on this device.
         """
-        if not (self.shared_utils.overlay_vtep or self.shared_utils.wan):
+        if not (self.shared_utils.overlay_vtep or self.shared_utils.autovpn_role):
             return None
 
         vxlan = {
             "udp_port": 4789,
         }
 
-        # update depending on the situtation
-        # TODO verify no overlap
         self._update_vtep(vxlan)
-        self._update_wan(vxlan)
         return {
             "Vxlan1": {
                 "description": f"{self.shared_utils.hostname}_VTEP",
@@ -52,76 +49,18 @@ class VxlanInterfaceMixin(UtilsMixin):
             }
         }
 
-    def _update_wan(self, vxlan: dict) -> None:
-        """
-        Update vxlan in-place with VTEP info
-        """
-        if not self.shared_utils.wan:
-            return None
-
-        vxlan["source_interface"] = "Loopback0"
-        vrfs = []
-        # vnis is a list of dicts only used for duplication checks across multiple types of objects all having "vni" as a key.
-        vnis = []
-        for tenant in self._filtered_tenants:
-            for vrf in tenant["vrfs"]:
-                if self.shared_utils.network_services_l3 and self.shared_utils.wan:
-                    vrf_name = vrf["name"]
-                    # Only configure VNI for VRF if the VRF is EVPN enabled
-                    if "evpn" not in vrf.get("address_families", ["evpn"]):
-                        continue
-
-                    vni = default(
-                        vrf.get("vrf_vni"),
-                        vrf.get("vrf_id"),
-                    )
-                    if vni is not None:
-                        # Silently ignore if we cannot set a VNI
-                        # This is legacy behavior so we will leave stricter enforcement to the schema
-                        vrf_data = {"name": vrf_name, "vni": vni}
-                        if get(vrf, "_evpn_l3_multicast_enabled"):
-                            underlay_l3_multicast_group_ipv4_pool = get(
-                                tenant,
-                                "evpn_l3_multicast.evpn_underlay_l3_multicast_group_ipv4_pool",
-                                required=True,
-                                org_key=f"'evpn_l3_multicast.evpn_underlay_l3_multicast_group_ipv4_pool' for Tenant: {tenant['name']}",
-                            )
-                            underlay_l3_mcast_group_ipv4_pool_offset = get(
-                                tenant, "evpn_l3_multicast.evpn_underlay_l3_multicast_group_ipv4_pool_offset", default=0
-                            )
-                            offset = vni - 1 + underlay_l3_mcast_group_ipv4_pool_offset
-                            vrf_data["multicast_group"] = self.shared_utils.ip_addressing._ip(underlay_l3_multicast_group_ipv4_pool, 32, offset, 0)
-
-                        # Duplicate check is not done on the actual list of vlans, but instead on our local "vnis" list.
-                        # This is necessary to find duplicate VNIs across multiple object types.
-                        append_if_not_duplicate(
-                            list_of_dicts=vnis,
-                            primary_key="vni",
-                            new_dict=vrf_data,
-                            context="VXLAN VNIs for VRFs",
-                            context_keys=["id", "name", "vni"],
-                        )
-                        # Here we append to the actual list of VRFs, so duplication check is on the VRF here.
-                        append_if_not_duplicate(
-                            list_of_dicts=vrfs,
-                            primary_key="name",
-                            new_dict=vrf_data,
-                            context="VXLAN VNIs for VRFs",
-                            context_keys=["name", "vni"],
-                        )
-        if vrfs:
-            vxlan["vrfs"] = vrfs
-
     def _update_vtep(self, vxlan: dict) -> None:
         """
         Update vxlan in-place with VTEP info
         """
-        if not self.shared_utils.overlay_vtep:
+        if not (self.shared_utils.overlay_vtep or self.shared_utils.autovpn_role):
             return None
 
         if self._multi_vtep:
             vxlan["source_interface"] = "Loopback0"
             vxlan["mlag_source_interface"] = self.shared_utils.vtep_loopback
+        elif self.shared_utils.autovpn_role:
+            vxlan["source_interface"] = "Loopback0"
         else:
             vxlan["source_interface"] = self.shared_utils.vtep_loopback
 
@@ -179,6 +118,10 @@ class VxlanInterfaceMixin(UtilsMixin):
                         # Silently ignore if we cannot set a VNI
                         # This is legacy behavior so we will leave stricter enforcement to the schema
                         vrf_data = {"name": vrf_name, "vni": vni}
+
+                        if self.shared_utils.autovpn_role and vni > 255:
+                            raise AristaAvdError("vni for AutoVPN use case cannot be > 255, got {vni} for vrf {vrf_name} in tenant {tenant['name']}.")
+
                         if get(vrf, "_evpn_l3_multicast_enabled"):
                             underlay_l3_multicast_group_ipv4_pool = get(
                                 tenant,

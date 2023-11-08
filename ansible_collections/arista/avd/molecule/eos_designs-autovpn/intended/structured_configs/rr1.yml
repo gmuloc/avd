@@ -11,32 +11,41 @@ router_bgp:
     ecmp: 4
   updates:
     wait_install: true
-  bgp_cluster_id: 192.168.42.1
   listen_ranges:
   - prefix: 192.168.42.0/24
-    peer_group: autovpnEdges
-  peer_groups:
-  - name: autovpnEdges
-    type: wan
+    peer_group: WAN-OVERLAY-PEERS
     remote_as: '65000'
+  peer_groups:
+  - name: RR-OVERLAY-PEERS
+    type: wan
     update_source: Loopback0
-    password: SHsTgDgjVUU5a9blyxSt3Q==
+    bfd: true
+    send_community: all
+    maximum_routes: 0
+    remote_as: '65000'
+  - name: WAN-OVERLAY-PEERS
+    type: wan
+    update_source: Loopback0
+    password: htm4AZe9mIQOO1uiMuGgYQ==
     send_community: all
     maximum_routes: 12000
+    remote_as: '65000'
     route_reflector_client: true
   address_family_evpn:
     peer_groups:
-    - name: autovpnEdges
+    - name: WAN-OVERLAY-PEERS
+      activate: true
+    - name: RR-OVERLAY-PEERS
       activate: true
   address_family_ipv4:
     peer_groups:
-    - name: autovpnEdges
+    - name: WAN-OVERLAY-PEERS
       activate: false
-    - name: EVPN-OVERLAY-PEERS
+    - name: RR-OVERLAY-PEERS
       activate: false
   address_family_path_selection:
     peer_groups:
-    - name: autovpnEdges
+    - name: WAN-OVERLAY-PEERS
       activate: true
       additional_paths:
         receive: true
@@ -63,13 +72,37 @@ management_api_http:
   enable_vrfs:
   - name: MGMT
   enable_https: true
+ethernet_interfaces:
+- name: Ethernet1
+  description: WAN_MPLS-1
+  type: routed
+  shutdown: false
+  ip_address: 10.1.0.72/24
+loopback_interfaces:
+- name: Loopback0
+  description: EVPN_Overlay_Peering
+  shutdown: false
+  ip_address: 192.168.42.1/32
 ip_security:
   ike_policies:
+  - name: dataPlaneIkePolicy
+    local_id: 192.168.42.1
   - name: IKEAUTOVPN
     local_id: 192.168.42.1
   sa_policies:
+  - name: dataPlaneSaPolicy
   - name: SAAUTOVPN
   profiles:
+  - name: dataPlaneIpsecProfile
+    ike_policy: dataPlaneIkePolicy
+    sa_policy: dataPlaneSaPolicy
+    connection: start
+    shared_key: 0112140D481F07123713705
+    dpd:
+      interval: 10
+      time: 50
+      action: clear
+    mode: transport
   - name: AUTOVPNTUNNEL
     ike_policy: IKEAUTOVPN
     sa_policy: SAAUTOVPN
@@ -80,22 +113,6 @@ ip_security:
       time: 50
       action: clear
     mode: transport
-ethernet_interfaces:
-- name: Ethernet1
-  description: WAN_MPLS-1
-  type: routed
-  shutdown: false
-  ip_address: dhcp
-  dhcp_client_accept_default_route: true
-loopback_interfaces:
-- name: Loopback0
-  description: EVPN_Overlay_Peering
-  shutdown: false
-  ip_address: 192.168.42.1/32
-stun:
-  server:
-    local_interfaces:
-    - Ethernet1
 router_bfd:
   multihop:
     interval: 300
@@ -122,3 +139,15 @@ router_path_selection:
   vrfs:
   - name: default
     path_selection_policy: dps-policy-default
+stun:
+  server:
+    local_interfaces:
+    - Ethernet1
+dps_interfaces:
+- name: Dps1
+vxlan_interface:
+  Vxlan1:
+    description: rr1_VTEP
+    vxlan:
+      udp_port: 4789
+      source_interface: Loopback0

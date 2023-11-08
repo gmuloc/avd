@@ -143,10 +143,19 @@ keys:
           type: bool
           default: false
           description: Is this switch an MPLS LSR.
-        wan:
-          type: bool
-          default: false
-          description: Is this switch a WAN device..
+        default_autovpn_role:
+          type: str
+          valid_values:
+            - client
+            - server
+          description: Default autovpn_role. Can be overridden in topology vars.
+        default_avt_role:
+          type: str
+          valid_values:
+            - pathfinder
+            - edge
+            - transit
+          description: Default avt_role. Can be overridden in topology vars.
         ip_addressing:
           type: dict
           description: Override ip_addressing templates.

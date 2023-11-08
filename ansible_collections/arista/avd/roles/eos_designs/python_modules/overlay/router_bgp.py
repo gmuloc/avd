@@ -45,8 +45,7 @@ class RouterBgpMixin(UtilsMixin):
         return strip_empties_from_dict(router_bgp, strip_values_tuple=(None, ""))
 
     def _bgp_cluster_id(self) -> str | None:
-        # TODO - make this better
-        if self.shared_utils.wan:
+        if self.shared_utils.autovpn_role:
             return None
 
         if self.shared_utils.overlay_routing_protocol == "ibgp":
@@ -59,23 +58,20 @@ class RouterBgpMixin(UtilsMixin):
         Generate listen ranges
         TODO make peer_group name parametrizable
         """
-        if not self.shared_utils.wan:
-            return None
-
-        if self.shared_utils.type not in ["pathfinders", "rr"]:
+        if self.shared_utils.autovpn_role != "server":
             return None
 
         return [
             {
                 "prefix": self.shared_utils.loopback_ipv4_pool,
-                "peer_group": "autovpnEdges",
+                "peer_group": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"],
                 "remote_as": self.shared_utils.bgp_as,
             }
         ]
 
-    def _generate_base_peer_group(self, pg_type: str, pg_name: str) -> dict:
-        if pg_type not in ["mpls", "evpn"]:
-            raise AristaAvdError("_generate_base_peer_group should be called with pg_type in ['mpls', 'evpn']")
+    def _generate_base_peer_group(self, pg_type: str, pg_name: str, maximum_routes: int = 0) -> dict:
+        if pg_type not in ["mpls", "evpn", "wan"]:
+            raise AristaAvdError("_generate_base_peer_group should be called with pg_type in ['mpls', 'evpn', 'wan']")
 
         peer_group = {
             "name": self.shared_utils.bgp_peer_groups[pg_name]["name"],
@@ -84,7 +80,7 @@ class RouterBgpMixin(UtilsMixin):
             "bfd": self.shared_utils.bgp_peer_groups[pg_name]["bfd"],
             "password": self.shared_utils.bgp_peer_groups[pg_name]["password"],
             "send_community": "all",
-            "maximum_routes": 0,
+            "maximum_routes": maximum_routes,
             "struct_cfg": self.shared_utils.bgp_peer_groups[pg_name]["structured_config"],
         }
 
@@ -128,51 +124,35 @@ class RouterBgpMixin(UtilsMixin):
                 peer_groups.append(mpls_peer_group)
 
             # TODO - not great to have this logic with not WAN
-            if self.shared_utils.overlay_evpn_vxlan is True and self.shared_utils.wan is not True:
+            if self.shared_utils.overlay_evpn_vxlan is True and not self.shared_utils.autovpn_role:
                 # EVPN OVERLAY peer group - also in EBGP..
-                ebgp_peer_group = {
+                ibgp_peer_group = {
                     **self._generate_base_peer_group("evpn", "evpn_overlay_peers"),
                     "remote_as": self.shared_utils.bgp_as,
                 }
 
                 if self.shared_utils.evpn_role == "server":
-                    ebgp_peer_group["route_reflector_client"] = True
+                    ibgp_peer_group["route_reflector_client"] = True
 
-                peer_groups.append(ebgp_peer_group)
+                peer_groups.append(ibgp_peer_group)
 
             if self._is_mpls_server is True:
                 peer_groups.append({**self._generate_base_peer_group("mpls", "rr_overlay_peers"), "remote_as": self.shared_utils.bgp_as})
 
-            if self.shared_utils.wan:
-                # TODO, do not use role, do not hardcode names, do not select name based on role as it makes it
-                # unconfigruable - probably need 2
-                if self.shared_utils.type in ["pathfinders", "rr"]:
-                    peer_groups.append(
-                        {
-                            "name": self.shared_utils.bgp_peer_groups["autovpn_edges"]["name"],
-                            "type": "wan",
-                            "remote_as": self.shared_utils.bgp_as,
-                            "update_source": "Loopback0",
-                            "password": self.shared_utils.bgp_peer_groups["autovpn_edges"]["password"],
-                            "send_community": "all",
-                            "maximum_routes": 12000,
-                            "route_reflector_client": True,
-                            "struct_cfg": self.shared_utils.bgp_peer_groups["autovpn_edges"]["structured_config"],
-                        }
-                    )
-                else:
-                    peer_groups.append(
-                        {
-                            "name": self.shared_utils.bgp_peer_groups["pathfinders"]["name"],
-                            "type": "wan",
-                            "remote_as": self.shared_utils.bgp_as,
-                            "update_source": "Loopback0",
-                            "password": self.shared_utils.bgp_peer_groups["pathfinders"]["password"],
-                            "send_community": "all",
-                            "maximum_routes": 12000,
-                            "struct_cfg": self.shared_utils.bgp_peer_groups["pathfinders"]["structured_config"],
-                        }
-                    )
+            if self.shared_utils.autovpn_role == "server":
+                peer_groups.append({**self._generate_base_peer_group("wan", "rr_overlay_peers"), "remote_as": self.shared_utils.bgp_as})
+
+            if self.shared_utils.autovpn_role:
+                # WAN OVERLAY peer group
+                ibgp_peer_group = {
+                    **self._generate_base_peer_group("wan", "wan_overlay_peers", maximum_routes=12000),
+                    "remote_as": self.shared_utils.bgp_as,
+                }
+
+                if self.shared_utils.autovpn_role == "server":
+                    ibgp_peer_group["route_reflector_client"] = True
+
+                peer_groups.append(ibgp_peer_group)
 
         # same for ebgp and ibgp
         if self.shared_utils.overlay_ipvpn_gateway is True:
@@ -192,12 +172,10 @@ class RouterBgpMixin(UtilsMixin):
         """
         peer_groups = []
 
-        if self.shared_utils.wan:
-            pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
-            pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
-            peer_groups.append({"name": pg_name, "activate": False})
+        if self.shared_utils.autovpn_role is not None:
+            peer_groups.append({"name": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"], "activate": False})
 
-        # no elif
+        # TODO no elif
         elif self.shared_utils.overlay_evpn_vxlan is True:
             peer_groups.append({"name": self.shared_utils.bgp_peer_groups["evpn_overlay_peers"]["name"], "activate": False})
 
@@ -209,7 +187,7 @@ class RouterBgpMixin(UtilsMixin):
             if self.shared_utils.overlay_mpls is True:
                 peer_groups.append({"name": self.shared_utils.bgp_peer_groups["mpls_overlay_peers"]["name"], "activate": False})
 
-            if self._is_mpls_server is True:
+            if self._is_mpls_server is True or self.shared_utils.autovpn_role == "server":
                 peer_groups.append({"name": self.shared_utils.bgp_peer_groups["rr_overlay_peers"]["name"], "activate": False})
 
         if self.shared_utils.overlay_ipvpn_gateway is True:
@@ -223,11 +201,8 @@ class RouterBgpMixin(UtilsMixin):
 
         peer_groups = []
 
-        # TODO no name
-        if self.shared_utils.wan:
-            pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
-            pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
-            peer_groups.append({"name": pg_name, "activate": True})
+        if self.shared_utils.autovpn_role is not None:
+            peer_groups.append({"name": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"], "activate": True})
 
         # TODO not elif
         elif self.shared_utils.overlay_evpn_vxlan is True:
@@ -271,7 +246,7 @@ class RouterBgpMixin(UtilsMixin):
                         }
                     )
 
-            if self._is_mpls_server is True:
+            if self._is_mpls_server is True or self.shared_utils.autovpn_role == "server":
                 peer_groups.append({"name": self.shared_utils.bgp_peer_groups["rr_overlay_peers"]["name"], "activate": True})
 
         address_family_evpn["peer_groups"] = peer_groups
@@ -297,22 +272,20 @@ class RouterBgpMixin(UtilsMixin):
 
     def _address_family_path_selection(self) -> dict | None:
         """ """
-        if not self.shared_utils.wan:
+        if not self.shared_utils.autovpn_role:
             return None
 
-        address_family_path_selection = {}
+        address_family_path_selection = {
+            "peer_groups": [
+                {
+                    "name": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"],
+                    "activate": True,
+                    "additional_paths": {"receive": True, "send": {"any": True}},
+                }
+            ]
+        }
 
-        peer_groups = []
-
-        # TODO no name selection that is not configurable -> maybe a name based on type in shared_utils ?
-        pg_config = "autovpn_edges" if self.shared_utils.type in ["pathfinders", "rr"] else "pathfinders"
-        pg_name = self.shared_utils.bgp_peer_groups[pg_config]["name"]
-        peer_groups.append({"name": pg_name, "activate": True, "additional_paths": {"receive": True, "send": {"any": True}}})
-
-        address_family_path_selection["peer_groups"] = peer_groups
-
-        # TODO do not use type
-        if self.shared_utils.type in ["pathfinders", "rr"]:
+        if self.shared_utils.autovpn_role == "server":
             address_family_path_selection["bgp"] = {"additional_paths": {"receive": True, "send": {"any": True}}}
 
         return address_family_path_selection
@@ -460,11 +433,15 @@ class RouterBgpMixin(UtilsMixin):
                 for route_client, data in natural_sort(self._evpn_route_clients.items()):
                     neighbor = self._create_neighbor(data["ip_address"], route_client, self.shared_utils.bgp_peer_groups["evpn_overlay_peers"]["name"])
                     neighbors.append(neighbor)
-            if self.shared_utils.wan:
-                if self.shared_utils.type not in ["pathfinders", "rr"]:
-                    for wan_route_reflector, data in self._wan_route_reflectors.items():
-                        neighbor = self._create_neighbor(data["ip_address"], wan_route_reflector, self.shared_utils.bgp_peer_groups["pathfinders"]["name"])
-                        neighbors.append(neighbor)
+
+            if self.shared_utils.autovpn_role == "client":
+                for wan_route_reflector, data in self._wan_route_reflectors.items():
+                    neighbor = self._create_neighbor(data["ip_address"], wan_route_reflector, self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"])
+                    neighbors.append(neighbor)
+            if self.shared_utils.autovpn_role == "server":
+                for wan_route_reflector, data in self._wan_route_reflectors.items():
+                    neighbor = self._create_neighbor(data["ip_address"], wan_route_reflector, self.shared_utils.bgp_peer_groups["rr_overlay_peers"]["name"])
+                    neighbors.append(neighbor)
 
         for ipvpn_gw_peer, data in natural_sort(self._ipvpn_gateway_remote_peers.items()):
             neighbor = self._create_neighbor(

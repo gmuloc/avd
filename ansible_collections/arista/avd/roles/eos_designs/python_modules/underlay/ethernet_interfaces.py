@@ -135,30 +135,29 @@ class EthernetInterfacesMixin(UtilsMixin):
                 context_keys=["name", "peer", "peer_interface"],
             )
 
-        # TODO - check it if makes sense here
         # TODO add option for Front Door VRF
         # TODO check we are allowed to use Front Door VRF lingua ;)
-        if self.shared_utils.wan:
+        if self.shared_utils.autovpn_role:
             for transport in get(self.shared_utils.switch_data_combined, "transports", []):
-                ethernet_interface = {
-                    "name": transport.get("interface"),
-                    "description": self.shared_utils.interface_descriptions.underlay_ethernet_interfaces("underlay_wan", transport["name"], ""),
-                    "type": "routed",
-                    "shutdown": False,  # TODO: allow to shut them down ;)
-                }
-                if transport.get("public_ip") is not None:
-                    # TODO - better way to not hardcode this mask ... probably public_ip expect a mask
-                    ethernet_interface["ip_address"] = transport["public_ip"] + "/24"
-                else:
-                    ethernet_interface["ip_address"] = "dhcp"
-                    ethernet_interface["dhcp_client_accept_default_route"] = True
-                append_if_not_duplicate(
-                    list_of_dicts=ethernet_interfaces,
-                    primary_key="name",
-                    new_dict=ethernet_interface,
-                    context="Ethernet Interfaces defined for underlay",
-                    context_keys=["name"],
-                )
+                for interface in get(transport, "interfaces", []):
+                    ethernet_interface = {
+                        "name": interface.get("name"),
+                        "description": self.shared_utils.interface_descriptions.underlay_ethernet_interfaces("underlay_wan", transport["name"], ""),
+                        "type": "routed",
+                        "shutdown": interface.get("shutdown", False),
+                    }
+
+                    ethernet_interface["ip_address"] = interface.get("ip_address", "dhcp")
+                    if ethernet_interface["ip_address"] == "dhcp":
+                        ethernet_interface["dhcp_client_accept_default_route"] = True
+
+                    append_if_not_duplicate(
+                        list_of_dicts=ethernet_interfaces,
+                        primary_key="name",
+                        new_dict=ethernet_interface,
+                        context="Ethernet Interfaces defined for underlay",
+                        context_keys=["name"],
+                    )
 
         if ethernet_interfaces:
             return ethernet_interfaces

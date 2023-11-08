@@ -1066,12 +1066,24 @@ $defs:
                 name:
                   type: str
                   description: Transport name.
-                interface:
-                  type: str
-                  description: Interface to connect to the transport -TODO can it be a list?
-                public_ip:
-                  type: str
-                  description: The public IP for the transport on the node.
+                interfaces:
+                  type: list
+                  primary_key: name
+                  items:
+                    type: dict
+                    keys:
+                      name:
+                        type: str
+                        description: Interface to connect to the transport
+                      ip_address:
+                        type: str
+                        description: |-
+                          The public IP for the transport on the node with mask.
+                          If not set, default to "dhcp"
+                      shutdown:
+                        type: bool
+                        default: False
+                      # TODO, add VRF
                 ipsec_enabled:
                   type: bool
                   default: true

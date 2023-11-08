@@ -16,31 +16,30 @@ class RouterPathSelectionMixin(UtilsMixin):
     Class should only be used as Mixin to a AvdStructuredConfig class
     """
 
-    # TODO - MUST NOT RELY ON TYPE -> need knobs in node type key
-
     @cached_property
     def router_path_selection(self) -> dict | None:
         """
         Return structured config for router path-selection (DPS)
         """
 
-        if not self.shared_utils.wan:
+        if not self.shared_utils.autovpn_role:
             return None
 
         router_path_selection = {}
 
-        if self.shared_utils.type in ["pathfinders", "rr"]:
+        if self.shared_utils.autovpn_role == "server":
             router_path_selection["peer_dynamic_source"] = "stun"
 
         path_groups = []
+        # TODO - need to have default value in one place only -> maybe facts / shared_utils ?
+        ipsec_profile_name = get(self._hostvars, "autovpn.control_plane.profile_name", "controlPlaneIpsecProfile")
+
         for transport in get(self.shared_utils.switch_data_combined, "transports", []):
             path_groups.append(
                 {
                     "name": transport.get("name"),
                     "id": self._get_transport_id(transport),
-                    # TODO CHANGE NEXT
-                    "ipsec_profile": "AUTOVPNTUNNEL",
-                    # TODO handle multiple interfaces
+                    "ipsec_profile": ipsec_profile_name,
                     "local_interfaces": self._get_local_interfaces(transport),
                     "dynamic_peers": self._get_dynamic_peers(),
                     "static_peers": self._get_static_peers(transport),
@@ -69,7 +68,12 @@ class RouterPathSelectionMixin(UtilsMixin):
         """
         TODO - implement stuff from Venkit
         """
-        # HACK
+        wan_transports = get(self.shared_utils.switch_data_combined, "transports")
+        wan_transport = get_item(wan_transports, "name", transport["name"], required=True)
+        if (wan_transport_id := wan_transport.get("path_group_id")) is not None:
+            return wan_transport_id
+
+        # TODO avoid hard coded transports
         if transport["name"] == "MPLS-1":
             return 100
         if transport["name"] == "MPLS-2":
@@ -78,52 +82,55 @@ class RouterPathSelectionMixin(UtilsMixin):
             return 300
         return 666
 
-    def _get_local_interfaces(self, transport: dict) -> dict | None:
+    def _get_local_interfaces(self, transport: dict) -> list | None:
         """
-        TODO - handle multiples interfaces ?
         TODO - handle multiples stun profiles
         """
-        local_interface = {"name": transport.get("interface")}
-        if self.shared_utils.type not in ["pathfinders", "rr"]:
-            # This MUST be made better
-            for wan_route_reflector, data in self._wan_route_reflectors.items():
-                for wr_transport in data.get("transports"):
-                    router_transports_name = [wr_transport["name"] for transport in get(self.shared_utils.switch_data_combined, "transports", [])]
-                    if transport["name"] not in router_transports_name:
-                        continue
-                    # This stun profile name should probably be a fact to avoid having it underlay/stun.py and here in
-                    # for manageability
-                    stun_profile_name = f"{wan_route_reflector}-{transport['name']}"
-                    local_interface["stun"] = {"server_profiles": [stun_profile_name]}
+        local_interfaces = []
+        for interface in transport.get("interfaces", []):
+            local_interface = {"name": interface.get("name")}
+            if self.shared_utils.autovpn_role == "client":
+                # This MUST be made better
+                for wan_route_reflector, data in self._wan_route_reflectors.items():
+                    for wr_transport in data.get("transports"):
+                        router_transports_name = [wr_transport["name"] for transport in get(self.shared_utils.switch_data_combined, "transports", [])]
+                        if transport["name"] not in router_transports_name:
+                            continue
+                        stun_profile_name = self._stun_server_profile_name(wan_route_reflector, transport["name"])
+                        local_interface["stun"] = {"server_profiles": [stun_profile_name]}
 
-        return [local_interface]
+            local_interfaces.append(local_interface)
+
+        return local_interfaces
 
     def _get_dynamic_peers(self) -> dict | None:
         """ """
-        if self.shared_utils.type not in ["transit", "edge"]:
+        if self.shared_utils.autovpn_role != "client":
             return None
         return {"enabled": True}
 
     def _get_static_peers(self, transport: dict) -> list | None:
         """
-        TODO generate peer static config
+        TODO
         """
-        if self.shared_utils.type not in ["transit", "edge"]:
+        if self.shared_utils.autovpn_role != "client":
             return None
         static_peers = []
-        # TODO need some way to loop through rr/pathfinders transports public_ips
-        # TODO - probably need to filter on public IPs as I guess not needed for MPLS -> ask
         for wan_route_reflector, data in self._wan_route_reflectors.items():
             # TODO GUARDS GUARDS!!
             # TODO make next logic nicer.. rendering only if transport is present on the remote RR
             if not (transport_data := get_item(data["transports"], "name", transport["name"], default={})):
                 continue
-            ipv4_addresses = [transport_data.get("public_ip")]
-            static_peers.append(
-                {
-                    "router_ip": data.get("router_id"),
-                    "name": wan_route_reflector,
-                    "ipv4_addresses": ipv4_addresses,
-                }
-            )
+            for interface in transport_data.get("interfaces", []):
+                ipv4_addresses = []
+                if (ip_address := interface.get("ip_address")) is not None:
+                    # TODO - removing mask using split but maybe a helper is clearer
+                    ipv4_addresses.append(ip_address.split("/")[0])
+                static_peers.append(
+                    {
+                        "router_ip": data.get("router_id"),
+                        "name": wan_route_reflector,
+                        "ipv4_addresses": ipv4_addresses,
+                    }
+                )
         return static_peers
