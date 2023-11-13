@@ -12,6 +12,7 @@
   - [Internal VLAN Allocation Policy Configuration](#internal-vlan-allocation-policy-configuration)
 - [IP Security](#ip-security)
   - [IKE policies](#ike-policies)
+  - [Security Association policies](#security-association-policies)
   - [IPSec profiles](#ipsec-profiles)
   - [IP Security Configuration](#ip-security-configuration)
 - [Interfaces](#interfaces)
@@ -94,10 +95,17 @@ vlan internal order ascending range 1006 1199
 
 ### IKE policies
 
-| Policy name | Local ID |
-| ----------- | -------- |
-| dataPlaneIkePolicy | 192.168.42.2 |
-| IKEAUTOVPN | 192.168.42.2 |
+| Policy name | IKE lifetime | Encryption | DH group | Local ID |
+| ----------- | ------------ | ---------- | -------- | -------- |
+| dataPlaneIkePolicy | - | - | - | 192.168.42.2 |
+| IKEAUTOVPN | - | - | - | 192.168.42.2 |
+
+### Security Association policies
+
+| Policy name | ESP Integrity | ESP Encryption | PFS DH Group |
+| ----------- | ------------- | -------------- | ------------ |
+| dataPlaneSaPolicy | - | - | - |
+| SAAUTOVPN | - | - | - |
 
 ### IPSec profiles
 
