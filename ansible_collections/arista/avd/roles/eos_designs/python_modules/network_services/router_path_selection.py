@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from functools import cached_property
 
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
+
 from .utils import UtilsMixin
 
 
@@ -24,6 +26,11 @@ class RouterPathSelectionMixin(UtilsMixin):
             return None
 
         if not self.shared_utils.network_services_l3:
+            return None
+
+        # TODO make this better
+        local_transports = get(self.shared_utils.switch_data_combined, "transports", [])
+        if not local_transports:
             return None
 
         router_path_selection = {}

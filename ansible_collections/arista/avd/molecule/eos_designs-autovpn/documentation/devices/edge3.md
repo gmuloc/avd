@@ -30,10 +30,6 @@
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
-  - [Router Path-selection](#router-path-selection)
-- [STUN](#stun)
-  - [STUN Client](#stun-client)
-  - [STUN Device Configuration](#stun-device-configuration)
 
 ## Management
 
@@ -175,19 +171,11 @@ interface Dps1
 
 | Interface | Description | Type | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | -----| ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
-| Ethernet3 | WAN_INTERNET | routed | - | dhcp | default | - | False | - | - |
 | Ethernet4 | Client LAN Network | routed | - | 192.168.3.1/24 | SE_LAB | - | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
-!
-interface Ethernet3
-   description WAN_INTERNET
-   no shutdown
-   no switchport
-   ip address dhcp
-   dhcp client accept default-route
 !
 interface Ethernet4
    description Client LAN Network
@@ -436,125 +424,4 @@ router bfd
 vrf instance MGMT
 !
 vrf instance SE_LAB
-```
-
-### Router Path-selection
-
-#### Path Groups
-
-##### Path Group INTERNET
-
-| Setting | Value |
-| ------  | ----- |
-| Path Group ID | 300 |
-| IPSec profile | AUTOVPNTUNNEL |
-
-###### Local Interfaces
-
-| Interface name | Public address | STUN server profile(s) |
-| -------------- | -------------- | ---------------------- |
-| Ethernet3 | - | rr2-INTERNET-1<br>rr3-INTERNET-1 |
-
-###### Dynamic peers settings
-
-| Setting | Value |
-| ------  | ----- |
-| IP Local | - |
-| IPSec | - |
-
-###### Static peers
-
-| Router IP | Name | IPv4 address(es) |
-| --------- | ---- | ---------------- |
-| 192.168.42.2 | rr2 | 104.197.58.72 |
-| 192.168.42.3 | rr3 | 42.42.42.42 |
-
-#### Load-balance policies
-
-| Policy name | Path group(s) |
-| ----------- | ------------- |
-| LBPOLICY | INTERNET |
-
-#### DPS policies
-
-##### DPS policy dps-policy-default
-
-| Rule ID | Application profile | Load-balance policy |
-| ------- | ------------------- | ------------------- |
-| Default Match | - | LBPOLICY |
-
-##### DPS policy dps-policy-SE_LAB
-
-| Rule ID | Application profile | Load-balance policy |
-| ------- | ------------------- | ------------------- |
-| Default Match | - | LBPOLICY |
-
-#### VRFs configuration
-
-| VRF name | DPS policy |
-| -------- | ---------- |
-| default | dps-policy-default |
-| SE_LAB | dps-policy-SE_LAB |
-
-#### Router Path-selection Device Configuration
-
-```eos
-!
-router path-selection
-   !
-   path-group INTERNET id 300
-      ipsec profile AUTOVPNTUNNEL
-      !
-      local interface Ethernet3
-         stun server-profile rr2-INTERNET-1 rr3-INTERNET-1
-      !
-      peer dynamic
-      !
-      peer static router-ip 192.168.42.2
-         name rr2
-         ipv4 address 104.197.58.72
-      !
-      peer static router-ip 192.168.42.3
-         name rr3
-         ipv4 address 42.42.42.42
-   !
-   load-balance policy LBPOLICY
-      path-group INTERNET
-   !
-   policy dps-policy-default
-      default-match
-         load-balance LBPOLICY
-   !
-   policy dps-policy-SE_LAB
-      default-match
-         load-balance LBPOLICY
-   !
-   vrf default
-      path-selection-policy dps-policy-default
-   !
-   vrf SE_LAB
-      path-selection-policy dps-policy-SE_LAB
-```
-
-## STUN
-
-### STUN Client
-
-#### Server Profiles
-
-| Server Profile | IP address |
-| -------------- | ---------- |
-| rr2-INTERNET-1 | 104.197.58.72 |
-| rr3-INTERNET-1 | 42.42.42.42 |
-
-### STUN Device Configuration
-
-```eos
-!
-stun
-   client
-      server-profile rr2-INTERNET-1
-         ip address 104.197.58.72
-      server-profile rr3-INTERNET-1
-         ip address 42.42.42.42
 ```

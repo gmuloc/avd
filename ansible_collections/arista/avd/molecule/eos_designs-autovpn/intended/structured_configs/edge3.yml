@@ -77,20 +77,6 @@ management_api_http:
   enable_vrfs:
   - name: MGMT
   enable_https: true
-ethernet_interfaces:
-- name: Ethernet3
-  description: WAN_INTERNET
-  type: routed
-  shutdown: false
-  ip_address: dhcp
-  dhcp_client_accept_default_route: true
-- name: Ethernet4
-  peer_type: l3_interface
-  ip_address: 192.168.3.1/24
-  shutdown: false
-  description: Client LAN Network
-  type: routed
-  vrf: SE_LAB
 loopback_interfaces:
 - name: Loopback0
   description: EVPN_Overlay_Peering
@@ -133,53 +119,16 @@ router_bfd:
     interval: 300
     min_rx: 300
     multiplier: 3
-router_path_selection:
-  path_groups:
-  - name: INTERNET
-    id: 300
-    ipsec_profile: AUTOVPNTUNNEL
-    local_interfaces:
-    - name: Ethernet3
-      stun:
-        server_profiles:
-        - rr2-INTERNET-1
-        - rr3-INTERNET-1
-    dynamic_peers:
-      enabled: true
-    static_peers:
-    - router_ip: 192.168.42.2
-      name: rr2
-      ipv4_addresses:
-      - 104.197.58.72
-    - router_ip: 192.168.42.3
-      name: rr3
-      ipv4_addresses:
-      - 42.42.42.42
-  load_balance_policies:
-  - name: LBPOLICY
-    path_groups:
-    - INTERNET
-  policies:
-  - name: dps-policy-default
-    default_match:
-      load_balance: LBPOLICY
-  - name: dps-policy-SE_LAB
-    default_match:
-      load_balance: LBPOLICY
-  vrfs:
-  - name: default
-    path_selection_policy: dps-policy-default
-  - name: SE_LAB
-    path_selection_policy: dps-policy-SE_LAB
-stun:
-  client:
-    server_profiles:
-    - name: rr2-INTERNET-1
-      ip_address: 104.197.58.72
-    - name: rr3-INTERNET-1
-      ip_address: 42.42.42.42
 ip_igmp_snooping:
   globally_enabled: true
+ethernet_interfaces:
+- name: Ethernet4
+  peer_type: l3_interface
+  ip_address: 192.168.3.1/24
+  shutdown: false
+  description: Client LAN Network
+  type: routed
+  vrf: SE_LAB
 dps_interfaces:
 - name: Dps1
 vxlan_interface:

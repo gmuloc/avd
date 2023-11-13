@@ -82,10 +82,10 @@ edge:
             - name: Ethernet3
     - name: edge3
       id: 3
-      transports:
-        - name: INTERNET
-          interfaces:
-            - name: Ethernet3
+      #transports:
+      #  - name: INTERNET
+      #    interfaces:
+      #      - name: Ethernet3
 
 # Transports
 transports:

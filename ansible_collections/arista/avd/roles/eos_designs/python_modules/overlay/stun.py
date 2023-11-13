@@ -57,6 +57,7 @@ class StunMixin(UtilsMixin):
                                 "ip_address": ip_address,
                             }
                         )
-            stun["client"] = {"server_profiles": server_profiles}
+            if server_profiles:
+                stun["client"] = {"server_profiles": server_profiles}
 
-        return stun
+        return stun or None

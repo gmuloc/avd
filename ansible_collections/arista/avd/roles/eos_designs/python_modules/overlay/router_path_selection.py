@@ -25,6 +25,11 @@ class RouterPathSelectionMixin(UtilsMixin):
         if not self.shared_utils.autovpn_role:
             return None
 
+        local_transports = get(self.shared_utils.switch_data_combined, "transports", [])
+
+        if not local_transports:
+            return None
+
         router_path_selection = {}
 
         if self.shared_utils.autovpn_role == "server":
@@ -34,7 +39,7 @@ class RouterPathSelectionMixin(UtilsMixin):
         # TODO - need to have default value in one place only -> maybe facts / shared_utils ?
         ipsec_profile_name = get(self._hostvars, "autovpn.control_plane.profile_name", "controlPlaneIpsecProfile")
 
-        for transport in get(self.shared_utils.switch_data_combined, "transports", []):
+        for transport in local_transports:
             path_groups.append(
                 {
                     "name": transport.get("name"),
@@ -50,8 +55,10 @@ class RouterPathSelectionMixin(UtilsMixin):
 
         # TODO Load balance policy - for now one policy with all path_groups
         load_balance_policies = []
-        load_balance_policies.append({"name": "LBPOLICY", "path_groups": [pg.get("name") for pg in path_groups]})
-        router_path_selection["load_balance_policies"] = load_balance_policies
+        if path_groups := [pg.get("name") for pg in path_groups]:
+            load_balance_policies.append({"name": "LBPOLICY", "path_groups": path_groups})
+        if load_balance_policies:
+            router_path_selection["load_balance_policies"] = load_balance_policies
 
         # TODO DPS policies - for now adding one default one - MAYBE NEED TO REMOVED
         policies = [{"name": "dps-policy-default", "default_match": {"load_balance": "LBPOLICY"}}]
@@ -92,7 +99,9 @@ class RouterPathSelectionMixin(UtilsMixin):
         for interface in transport.get("interfaces", []):
             local_interface = {"name": interface.get("name")}
             if self.shared_utils.autovpn_role == "client":
-                stun_server_profiles = [self._stun_server_profile_name(wrr, transport["name"]) for wrr in self._get_wan_route_reflector_with_transport(transport["name"])]
+                stun_server_profiles = [
+                    self._stun_server_profile_name(wrr, transport["name"]) for wrr in self._get_wan_route_reflector_with_transport(transport["name"])
+                ]
                 if stun_server_profiles:
                     local_interface["stun"] = {"server_profiles": stun_server_profiles}
 
@@ -100,7 +109,6 @@ class RouterPathSelectionMixin(UtilsMixin):
 
         return local_interfaces
 
-    
     def _get_wan_route_reflector_with_transport(self, transport_name: str) -> list:
         """
         Helper that retrieves the wan_route_reflector on which the transport is configured
