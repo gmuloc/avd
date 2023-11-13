@@ -25,6 +25,9 @@ class VlanInterfacesMixin(UtilsMixin):
 
         Consist of svis and mlag peering vlans from filtered tenants
         """
+        # TODO probably need to relax this
+        if self.shared_utils.autovpn_role:
+            return None
 
         if not (self.shared_utils.network_services_l2 and self.shared_utils.network_services_l3):
             return None

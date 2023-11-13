@@ -28,6 +28,9 @@ class VlansMixin(UtilsMixin):
         SVIs in all VRFs and L2VLANs deployed on this device.
         """
 
+        if self.shared_utils.autovpn_role:
+            return None
+
         if not self.shared_utils.network_services_l2:
             return None
 

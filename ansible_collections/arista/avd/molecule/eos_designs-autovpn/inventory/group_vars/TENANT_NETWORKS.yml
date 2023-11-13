@@ -1,6 +1,7 @@
 ---
 tenants:
   - name: SE_LAB
+    mac_vrf_vni_base: 10000
     vrfs:
       - name: SE_LAB
         vrf_vni: 201
@@ -20,5 +21,10 @@ tenants:
               - edge1
               - edge2
               - edge3
+        svis:
+          - id: 100
+            name: BLUE_DC1
+            enabled: true
+            ip_address_virtual: 172.16.100.1/24
       - name: default
         vrf_vni: 101
