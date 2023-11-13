@@ -84,24 +84,33 @@ class RouterPathSelectionMixin(UtilsMixin):
 
     def _get_local_interfaces(self, transport: dict) -> list | None:
         """
-        TODO - handle multiples stun profiles
+        Generate the router_path_selection.local_interfaces list
+
+        For AUTOVPN clients, configure the stun server profiles as appropriate
         """
         local_interfaces = []
         for interface in transport.get("interfaces", []):
             local_interface = {"name": interface.get("name")}
             if self.shared_utils.autovpn_role == "client":
-                # This MUST be made better
-                for wan_route_reflector, data in self._wan_route_reflectors.items():
-                    for wr_transport in data.get("transports"):
-                        router_transports_name = [wr_transport["name"] for transport in get(self.shared_utils.switch_data_combined, "transports", [])]
-                        if transport["name"] not in router_transports_name:
-                            continue
-                        stun_profile_name = self._stun_server_profile_name(wan_route_reflector, transport["name"])
-                        local_interface["stun"] = {"server_profiles": [stun_profile_name]}
+                stun_server_profiles = [self._stun_server_profile_name(wrr, transport["name"]) for wrr in self._get_wan_route_reflector_with_transport(transport["name"])]
+                if stun_server_profiles:
+                    local_interface["stun"] = {"server_profiles": stun_server_profiles}
 
             local_interfaces.append(local_interface)
 
         return local_interfaces
+
+    
+    def _get_wan_route_reflector_with_transport(self, transport_name: str) -> list:
+        """
+        Helper that retrieves the wan_route_reflector on which the transport is configured
+        TODO: maybe move to utils
+        """
+        res = []
+        for wan_route_reflector, data in self._wan_route_reflectors.items():
+            if get_item(data.get("transports", []), "name", transport_name):
+                res.append(wan_route_reflector)
+        return res
 
     def _get_dynamic_peers(self) -> dict | None:
         """ """
