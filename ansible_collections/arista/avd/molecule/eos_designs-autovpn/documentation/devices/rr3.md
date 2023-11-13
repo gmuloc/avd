@@ -1,9 +1,12 @@
-# edge2
+# rr3
 
 ## Table of Contents
 
 - [Management](#management)
   - [Management API HTTP](#management-api-http)
+- [Spanning Tree](#spanning-tree)
+  - [Spanning Tree Summary](#spanning-tree-summary)
+  - [Spanning Tree Device Configuration](#spanning-tree-device-configuration)
 - [Internal VLAN Allocation Policy](#internal-vlan-allocation-policy)
   - [Internal VLAN Allocation Policy Summary](#internal-vlan-allocation-policy-summary)
   - [Internal VLAN Allocation Policy Configuration](#internal-vlan-allocation-policy-configuration)
@@ -11,7 +14,6 @@
   - [IKE policies](#ike-policies)
   - [Security Association policies](#security-association-policies)
   - [IPSec profiles](#ipsec-profiles)
-  - [Key controller](#key-controller)
   - [IP Security Configuration](#ip-security-configuration)
 - [Interfaces](#interfaces)
   - [DPS Interfaces](#dps-interfaces)
@@ -25,14 +27,12 @@
   - [Router BGP](#router-bgp)
 - [BFD](#bfd)
   - [Router BFD](#router-bfd)
-- [Multicast](#multicast)
-  - [IP IGMP Snooping](#ip-igmp-snooping)
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
   - [Router Path-selection](#router-path-selection)
 - [STUN](#stun)
-  - [STUN Client](#stun-client)
+  - [STUN Server](#stun-server)
   - [STUN Device Configuration](#stun-device-configuration)
 
 ## Management
@@ -63,6 +63,19 @@ management api http-commands
       no shutdown
 ```
 
+## Spanning Tree
+
+### Spanning Tree Summary
+
+STP mode: **none**
+
+### Spanning Tree Device Configuration
+
+```eos
+!
+spanning-tree mode none
+```
+
 ## Internal VLAN Allocation Policy
 
 ### Internal VLAN Allocation Policy Summary
@@ -84,8 +97,8 @@ vlan internal order ascending range 1006 1199
 
 | Policy name | IKE lifetime | Encryption | DH group | Local ID |
 | ----------- | ------------ | ---------- | -------- | -------- |
-| dataPlaneIkePolicy | - | - | - | 192.168.42.4 |
-| IKEAUTOVPN | - | - | - | 192.168.42.4 |
+| dataPlaneIkePolicy | - | - | - | 192.168.42.3 |
+| IKEAUTOVPN | - | - | - | 192.168.42.3 |
 
 ### Security Association policies
 
@@ -101,12 +114,6 @@ vlan internal order ascending range 1006 1199
 | dataPlaneIpsecProfile | dataPlaneIkePolicy | dataPlaneSaPolicy | start | - | - | - | transport |
 | AUTOVPNTUNNEL | IKEAUTOVPN | SAAUTOVPN | start | - | - | - | transport |
 
-### Key controller
-
-| Profile name |
-| ------------ |
-| dataPlaneIpsecProfile |
-
 ### IP Security Configuration
 
 ```eos
@@ -114,10 +121,10 @@ vlan internal order ascending range 1006 1199
 ip security
    !
    ike policy dataPlaneIkePolicy
-      local-id 192.168.42.4
+      local-id 192.168.42.3
    !
    ike policy IKEAUTOVPN
-      local-id 192.168.42.4
+      local-id 192.168.42.3
    !
    sa policy dataPlaneSaPolicy
    !
@@ -138,9 +145,6 @@ ip security
       shared-key 7 0112140D481F07
       dpd 10 50 clear
       mode transport
-   !
-   key controller
-      profile dataPlaneIpsecProfile
 ```
 
 ## Interfaces
@@ -175,34 +179,17 @@ interface Dps1
 
 | Interface | Description | Type | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | -----| ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
-| Ethernet1 | WAN_MPLS-1 | routed | - | dhcp | default | - | False | - | - |
-| Ethernet3 | WAN_INTERNET | routed | - | dhcp | default | - | False | - | - |
-| Ethernet4 | Client LAN Network | routed | - | 192.168.2.1/24 | SE_LAB | - | False | - | - |
+| Ethernet3 | WAN_INTERNET | routed | - | 42.42.42.42 | default | - | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
 !
-interface Ethernet1
-   description WAN_MPLS-1
-   no shutdown
-   no switchport
-   ip address dhcp
-   dhcp client accept default-route
-!
 interface Ethernet3
    description WAN_INTERNET
    no shutdown
    no switchport
-   ip address dhcp
-   dhcp client accept default-route
-!
-interface Ethernet4
-   description Client LAN Network
-   no shutdown
-   no switchport
-   vrf SE_LAB
-   ip address 192.168.2.1/24
+   ip address 42.42.42.42
 ```
 
 ### Loopback Interfaces
@@ -213,7 +200,7 @@ interface Ethernet4
 
 | Interface | Description | VRF | IP Address |
 | --------- | ----------- | --- | ---------- |
-| Loopback0 | EVPN_Overlay_Peering | default | 192.168.42.4/32 |
+| Loopback0 | EVPN_Overlay_Peering | default | 192.168.42.3/32 |
 
 ##### IPv6
 
@@ -229,7 +216,7 @@ interface Ethernet4
 interface Loopback0
    description EVPN_Overlay_Peering
    no shutdown
-   ip address 192.168.42.4/32
+   ip address 192.168.42.3/32
 ```
 
 ### VXLAN Interface
@@ -241,21 +228,14 @@ interface Loopback0
 | Source Interface | Loopback0 |
 | UDP port | 4789 |
 
-##### VRF to VNI and Multicast Group Mappings
-
-| VRF | VNI | Multicast Group |
-| ---- | --- | --------------- |
-| SE_LAB | 201 | - |
-
 #### VXLAN Interface Device Configuration
 
 ```eos
 !
 interface Vxlan1
-   description edge2_VTEP
+   description rr3_VTEP
    vxlan source-interface Loopback0
    vxlan udp-port 4789
-   vxlan vrf SE_LAB vni 201
 ```
 
 ## Routing
@@ -277,7 +257,6 @@ service routing protocols model multi-agent
 | --- | --------------- |
 | default | True |
 | MGMT | False |
-| SE_LAB | True |
 
 #### IP Routing Device Configuration
 
@@ -285,7 +264,6 @@ service routing protocols model multi-agent
 !
 ip routing
 no ip routing vrf MGMT
-ip routing vrf SE_LAB
 ```
 
 ### IPv6 Routing
@@ -296,7 +274,6 @@ ip routing vrf SE_LAB
 | --- | --------------- |
 | default | False |
 | MGMT | false |
-| SE_LAB | false |
 
 ### Router BGP
 
@@ -304,7 +281,7 @@ ip routing vrf SE_LAB
 
 | BGP AS | Router ID |
 | ------ | --------- |
-| 65000 | 192.168.42.4 |
+| 65000 | 192.168.42.3 |
 
 | BGP Tuning |
 | ---------- |
@@ -312,7 +289,24 @@ ip routing vrf SE_LAB
 | no bgp default ipv4-unicast |
 | maximum-paths 4 ecmp 4 |
 
+#### Router BGP Listen Ranges
+
+| Prefix | Peer-ID Include Router ID | Peer Group | Peer-Filter | Remote-AS | VRF |
+| ------ | ------------------------- | ---------- | ----------- | --------- | --- |
+| 192.168.42.0/24 | - | WAN-OVERLAY-PEERS | - | 65000 | default |
+
 #### Router BGP Peer Groups
+
+##### RR-OVERLAY-PEERS
+
+| Settings | Value |
+| -------- | ----- |
+| Address Family | wan |
+| Remote AS | 65000 |
+| Source | Loopback0 |
+| BFD | True |
+| Send community | all |
+| Maximum routes | 0 (no limit) |
 
 ##### WAN-OVERLAY-PEERS
 
@@ -320,17 +314,10 @@ ip routing vrf SE_LAB
 | -------- | ----- |
 | Address Family | wan |
 | Remote AS | 65000 |
+| Route Reflector Client | Yes |
 | Source | Loopback0 |
 | Send community | all |
 | Maximum routes | 12000 |
-
-#### BGP Neighbors
-
-| Neighbor | Remote AS | VRF | Shutdown | Send-community | Maximum-routes | Allowas-in | BFD | RIB Pre-Policy Retain | Route-Reflector Client | Passive |
-| -------- | --------- | --- | -------- | -------------- | -------------- | ---------- | --- | --------------------- | ---------------------- | ------- |
-| 192.168.42.1 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
-| 192.168.42.2 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
-| 192.168.42.3 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
 
 #### Router BGP EVPN Address Family
 
@@ -338,6 +325,7 @@ ip routing vrf SE_LAB
 
 | Peer Group | Activate | Encapsulation |
 | ---------- | -------- | ------------- |
+| RR-OVERLAY-PEERS | True | default |
 | WAN-OVERLAY-PEERS | True | default |
 
 #### Router BGP Path-Selection Address Family
@@ -348,51 +336,44 @@ ip routing vrf SE_LAB
 | ---------- | -------- |
 | WAN-OVERLAY-PEERS | True |
 
-#### Router BGP VRFs
-
-| VRF | Route-Distinguisher | Redistribute |
-| --- | ------------------- | ------------ |
-| SE_LAB | 192.168.42.4:201 | connected |
-
 #### Router BGP Device Configuration
 
 ```eos
 !
 router bgp 65000
-   router-id 192.168.42.4
+   router-id 192.168.42.3
    maximum-paths 4 ecmp 4
    update wait-install
    no bgp default ipv4-unicast
+   bgp listen range 192.168.42.0/24 peer-group WAN-OVERLAY-PEERS remote-as 65000
+   neighbor RR-OVERLAY-PEERS peer group
+   neighbor RR-OVERLAY-PEERS remote-as 65000
+   neighbor RR-OVERLAY-PEERS update-source Loopback0
+   neighbor RR-OVERLAY-PEERS bfd
+   neighbor RR-OVERLAY-PEERS send-community
+   neighbor RR-OVERLAY-PEERS maximum-routes 0
    neighbor WAN-OVERLAY-PEERS peer group
    neighbor WAN-OVERLAY-PEERS remote-as 65000
    neighbor WAN-OVERLAY-PEERS update-source Loopback0
+   neighbor WAN-OVERLAY-PEERS route-reflector-client
    neighbor WAN-OVERLAY-PEERS password 7 <removed>
    neighbor WAN-OVERLAY-PEERS send-community
    neighbor WAN-OVERLAY-PEERS maximum-routes 12000
-   neighbor 192.168.42.1 peer group WAN-OVERLAY-PEERS
-   neighbor 192.168.42.1 description rr1
-   neighbor 192.168.42.2 peer group WAN-OVERLAY-PEERS
-   neighbor 192.168.42.2 description rr2
-   neighbor 192.168.42.3 peer group WAN-OVERLAY-PEERS
-   neighbor 192.168.42.3 description rr3
    !
    address-family evpn
+      neighbor RR-OVERLAY-PEERS activate
       neighbor WAN-OVERLAY-PEERS activate
    !
    address-family ipv4
+      no neighbor RR-OVERLAY-PEERS activate
       no neighbor WAN-OVERLAY-PEERS activate
    !
    address-family path-selection
+      bgp additional-paths receive
+      bgp additional-paths send any
       neighbor WAN-OVERLAY-PEERS activate
       neighbor WAN-OVERLAY-PEERS additional-paths receive
       neighbor WAN-OVERLAY-PEERS additional-paths send any
-   !
-   vrf SE_LAB
-      rd 192.168.42.4:201
-      route-target import evpn 201:201
-      route-target export evpn 201:201
-      router-id 192.168.42.4
-      redistribute connected
 ```
 
 ## BFD
@@ -413,21 +394,6 @@ router bfd
    multihop interval 300 min-rx 300 multiplier 3
 ```
 
-## Multicast
-
-### IP IGMP Snooping
-
-#### IP IGMP Snooping Summary
-
-| IGMP Snooping | Fast Leave | Interface Restart Query | Proxy | Restart Query Interval | Robustness Variable |
-| ------------- | ---------- | ----------------------- | ----- | ---------------------- | ------------------- |
-| Enabled | - | - | - | - | - |
-
-#### IP IGMP Snooping Device Configuration
-
-```eos
-```
-
 ## VRF Instances
 
 ### VRF Instances Summary
@@ -435,18 +401,21 @@ router bfd
 | VRF Name | IP Routing |
 | -------- | ---------- |
 | MGMT | disabled |
-| SE_LAB | enabled |
 
 ### VRF Instances Device Configuration
 
 ```eos
 !
 vrf instance MGMT
-!
-vrf instance SE_LAB
 ```
 
 ### Router Path-selection
+
+#### Router Path-selection Summary
+
+| Setting | Value |
+| ------  | ----- |
+| Dynamic peers source | STUN |
 
 #### Path Groups
 
@@ -461,63 +430,17 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet3 | - | rr2-INTERNET-1<br>rr3-INTERNET-1 |
-
-###### Dynamic peers settings
-
-| Setting | Value |
-| ------  | ----- |
-| IP Local | - |
-| IPSec | - |
-
-###### Static peers
-
-| Router IP | Name | IPv4 address(es) |
-| --------- | ---- | ---------------- |
-| 192.168.42.2 | rr2 | 104.197.58.72 |
-| 192.168.42.3 | rr3 | 42.42.42.42 |
-
-##### Path Group MPLS-1
-
-| Setting | Value |
-| ------  | ----- |
-| Path Group ID | 100 |
-| IPSec profile | AUTOVPNTUNNEL |
-
-###### Local Interfaces
-
-| Interface name | Public address | STUN server profile(s) |
-| -------------- | -------------- | ---------------------- |
-| Ethernet1 | - | rr1-MPLS-1-1 |
-
-###### Dynamic peers settings
-
-| Setting | Value |
-| ------  | ----- |
-| IP Local | - |
-| IPSec | - |
-
-###### Static peers
-
-| Router IP | Name | IPv4 address(es) |
-| --------- | ---- | ---------------- |
-| 192.168.42.1 | rr1 | 10.1.0.72 |
+| Ethernet3 | - |  |
 
 #### Load-balance policies
 
 | Policy name | Path group(s) |
 | ----------- | ------------- |
-| LBPOLICY | INTERNET<br>MPLS-1 |
+| LBPOLICY | INTERNET |
 
 #### DPS policies
 
 ##### DPS policy dps-policy-default
-
-| Rule ID | Application profile | Load-balance policy |
-| ------- | ------------------- | ------------------- |
-| Default Match | - | LBPOLICY |
-
-##### DPS policy dps-policy-SE_LAB
 
 | Rule ID | Application profile | Load-balance policy |
 | ------- | ------------------- | ------------------- |
@@ -528,83 +451,43 @@ vrf instance SE_LAB
 | VRF name | DPS policy |
 | -------- | ---------- |
 | default | dps-policy-default |
-| SE_LAB | dps-policy-SE_LAB |
 
 #### Router Path-selection Device Configuration
 
 ```eos
 !
 router path-selection
+   peer dynamic source stun
    !
    path-group INTERNET id 300
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet3
-         stun server-profile rr2-INTERNET-1 rr3-INTERNET-1
-      !
-      peer dynamic
-      !
-      peer static router-ip 192.168.42.2
-         name rr2
-         ipv4 address 104.197.58.72
-      !
-      peer static router-ip 192.168.42.3
-         name rr3
-         ipv4 address 42.42.42.42
-   !
-   path-group MPLS-1 id 100
-      ipsec profile AUTOVPNTUNNEL
-      !
-      local interface Ethernet1
-         stun server-profile rr1-MPLS-1-1
-      !
-      peer dynamic
-      !
-      peer static router-ip 192.168.42.1
-         name rr1
-         ipv4 address 10.1.0.72
    !
    load-balance policy LBPOLICY
-      path-group MPLS-1
       path-group INTERNET
    !
    policy dps-policy-default
       default-match
          load-balance LBPOLICY
    !
-   policy dps-policy-SE_LAB
-      default-match
-         load-balance LBPOLICY
-   !
    vrf default
       path-selection-policy dps-policy-default
-   !
-   vrf SE_LAB
-      path-selection-policy dps-policy-SE_LAB
 ```
 
 ## STUN
 
-### STUN Client
+### STUN Server
 
-#### Server Profiles
-
-| Server Profile | IP address |
-| -------------- | ---------- |
-| rr1-MPLS-1-1 | 10.1.0.72 |
-| rr2-INTERNET-1 | 104.197.58.72 |
-| rr3-INTERNET-1 | 42.42.42.42 |
+| Server local interfaces |
+| ----------------------- |
+| Ethernet3 |
 
 ### STUN Device Configuration
 
 ```eos
 !
 stun
-   client
-      server-profile rr1-MPLS-1-1
-         ip address 10.1.0.72
-      server-profile rr2-INTERNET-1
-         ip address 104.197.58.72
-      server-profile rr3-INTERNET-1
-         ip address 42.42.42.42
+   server
+      local-interface Ethernet3
 ```

@@ -10,3 +10,4 @@ edge,edge3,Ethernet4,l3_interface,,,True
 rr,rr1,Ethernet1,,,,True
 rr,rr2,Ethernet2,,,,True
 rr,rr2,Ethernet3,,,,True
+rr,rr3,Ethernet3,,,,True

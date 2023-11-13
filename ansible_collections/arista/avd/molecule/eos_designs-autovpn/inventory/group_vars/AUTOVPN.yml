@@ -44,6 +44,14 @@ rr:
           interfaces:
             - name: Ethernet3
               ip_address: 104.197.58.72
+    # Other RR with INTERNET to test multiple stun-profiles
+    - name: rr3
+      id: 3
+      transports:
+        - name: INTERNET
+          interfaces:
+            - name: Ethernet3
+              ip_address: 42.42.42.42
 
 # Edge
 edge:
@@ -52,7 +60,7 @@ edge:
     platform: cloud-eos
     loopback_ipv4_pool: 192.168.42.0/24
     loopback_ipv4_offset: 2
-    wan_route_reflectors: [rr1, rr2]
+    wan_route_reflectors: [rr1, rr2, rr3]
   nodes:
     - name: edge1
       id: 1

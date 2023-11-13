@@ -330,6 +330,7 @@ ip routing vrf SE_LAB
 | -------- | --------- | --- | -------- | -------------- | -------------- | ---------- | --- | --------------------- | ---------------------- | ------- |
 | 192.168.42.1 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
 | 192.168.42.2 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+| 192.168.42.3 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
 
 #### Router BGP EVPN Address Family
 
@@ -372,6 +373,8 @@ router bgp 65000
    neighbor 192.168.42.1 description rr1
    neighbor 192.168.42.2 peer group WAN-OVERLAY-PEERS
    neighbor 192.168.42.2 description rr2
+   neighbor 192.168.42.3 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.3 description rr3
    !
    address-family evpn
       neighbor WAN-OVERLAY-PEERS activate

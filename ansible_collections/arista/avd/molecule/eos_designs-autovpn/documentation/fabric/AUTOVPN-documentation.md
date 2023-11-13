@@ -22,6 +22,7 @@
 | AUTOVPN | edge | edge3 | - | cloud-eos | Provisioned | - |
 | AUTOVPN | rr | rr1 | - | cloud-eos | Provisioned | - |
 | AUTOVPN | rr | rr2 | - | cloud-eos | Provisioned | - |
+| AUTOVPN | rr | rr3 | - | cloud-eos | Provisioned | - |
 
 > Provision status is based on Ansible inventory declaration and do not represent real status from CloudVision.
 
@@ -51,7 +52,7 @@
 
 | Loopback Pool | Available Addresses | Assigned addresses | Assigned Address % |
 | ------------- | ------------------- | ------------------ | ------------------ |
-| 192.168.42.0/24 | 256 | 5 | 1.96 % |
+| 192.168.42.0/24 | 256 | 6 | 2.35 % |
 
 ### Loopback0 Interfaces Node Allocation
 
@@ -62,6 +63,7 @@
 | AUTOVPN | edge3 | 192.168.42.5/32 |
 | AUTOVPN | rr1 | 192.168.42.1/32 |
 | AUTOVPN | rr2 | 192.168.42.2/32 |
+| AUTOVPN | rr3 | 192.168.42.3/32 |
 
 ### VTEP Loopback VXLAN Tunnel Source Interfaces (VTEPs Only)
 

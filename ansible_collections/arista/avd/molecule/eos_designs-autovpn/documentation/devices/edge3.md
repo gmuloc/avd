@@ -322,6 +322,7 @@ ip routing vrf SE_LAB
 | -------- | --------- | --- | -------- | -------------- | -------------- | ---------- | --- | --------------------- | ---------------------- | ------- |
 | 192.168.42.1 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
 | 192.168.42.2 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
+| 192.168.42.3 | Inherited from peer group WAN-OVERLAY-PEERS | default | - | Inherited from peer group WAN-OVERLAY-PEERS | Inherited from peer group WAN-OVERLAY-PEERS | - | - | - | - | - |
 
 #### Router BGP EVPN Address Family
 
@@ -364,6 +365,8 @@ router bgp 65000
    neighbor 192.168.42.1 description rr1
    neighbor 192.168.42.2 peer group WAN-OVERLAY-PEERS
    neighbor 192.168.42.2 description rr2
+   neighbor 192.168.42.3 peer group WAN-OVERLAY-PEERS
+   neighbor 192.168.42.3 description rr3
    !
    address-family evpn
       neighbor WAN-OVERLAY-PEERS activate
@@ -450,7 +453,7 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet3 | - | rr2-INTERNET-1 |
+| Ethernet3 | - | rr2-INTERNET-1<br>rr3-INTERNET-1 |
 
 ###### Dynamic peers settings
 
@@ -464,6 +467,7 @@ vrf instance SE_LAB
 | Router IP | Name | IPv4 address(es) |
 | --------- | ---- | ---------------- |
 | 192.168.42.2 | rr2 | 104.197.58.72 |
+| 192.168.42.3 | rr3 | 42.42.42.42 |
 
 #### Load-balance policies
 
@@ -502,13 +506,17 @@ router path-selection
       ipsec profile AUTOVPNTUNNEL
       !
       local interface Ethernet3
-         stun server-profile rr2-INTERNET-1
+         stun server-profile rr2-INTERNET-1 rr3-INTERNET-1
       !
       peer dynamic
       !
       peer static router-ip 192.168.42.2
          name rr2
          ipv4 address 104.197.58.72
+      !
+      peer static router-ip 192.168.42.3
+         name rr3
+         ipv4 address 42.42.42.42
    !
    load-balance policy LBPOLICY
       path-group INTERNET
@@ -537,6 +545,7 @@ router path-selection
 | Server Profile | IP address |
 | -------------- | ---------- |
 | rr2-INTERNET-1 | 104.197.58.72 |
+| rr3-INTERNET-1 | 42.42.42.42 |
 
 ### STUN Device Configuration
 
@@ -546,4 +555,6 @@ stun
    client
       server-profile rr2-INTERNET-1
          ip address 104.197.58.72
+      server-profile rr3-INTERNET-1
+         ip address 42.42.42.42
 ```

@@ -42,6 +42,9 @@ router_bgp:
   - ip_address: 192.168.42.2
     peer_group: WAN-OVERLAY-PEERS
     description: rr2
+  - ip_address: 192.168.42.3
+    peer_group: WAN-OVERLAY-PEERS
+    description: rr3
   vrfs:
   - name: SE_LAB
     router_id: 192.168.42.4
@@ -161,6 +164,7 @@ router_path_selection:
       stun:
         server_profiles:
         - rr2-INTERNET-1
+        - rr3-INTERNET-1
     dynamic_peers:
       enabled: true
     static_peers:
@@ -168,6 +172,10 @@ router_path_selection:
       name: rr2
       ipv4_addresses:
       - 104.197.58.72
+    - router_ip: 192.168.42.3
+      name: rr3
+      ipv4_addresses:
+      - 42.42.42.42
   load_balance_policies:
   - name: LBPOLICY
     path_groups:
@@ -192,6 +200,8 @@ stun:
       ip_address: 10.1.0.72
     - name: rr2-INTERNET-1
       ip_address: 104.197.58.72
+    - name: rr3-INTERNET-1
+      ip_address: 42.42.42.42
 ip_igmp_snooping:
   globally_enabled: true
 dps_interfaces:
