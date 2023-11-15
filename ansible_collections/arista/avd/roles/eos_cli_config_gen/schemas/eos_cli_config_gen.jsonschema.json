@@ -24822,6 +24822,11 @@
         "^_.+$": {}
       },
       "title": "VxLAN Interface"
+    },
+    "zz": {
+      "type": "string",
+      "description": "Domain Name",
+      "title": "Zz"
     }
   },
   "additionalProperties": true

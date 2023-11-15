@@ -14130,6 +14130,9 @@ keys:
             type: str
             description: Multiline String with EOS CLI rendered directly on the Vxlan
               interface in the final EOS configuration.
+  zz:
+    type: str
+    description: Domain Name
 $defs:
   flow_tracking:
     type: dict
