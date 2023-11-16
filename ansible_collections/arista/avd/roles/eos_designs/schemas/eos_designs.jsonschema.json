@@ -15855,6 +15855,169 @@
       },
       "title": "Redundancy"
     },
+    "sdwans_ites": {
+      "type": "array",
+      "description": "SD WAN Sites.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "SD-WAN site name.",
+            "title": "Name"
+          },
+          "id": {
+            "type": "integer",
+            "description": "SD-WAN site ID.",
+            "minimum": 1,
+            "maximum": 255,
+            "title": "ID"
+          },
+          "role": {
+            "type": "string",
+            "description": "Role name.",
+            "enum": [
+              "edge",
+              "pathfinder",
+              "transit region",
+              "transit zone"
+            ],
+            "title": "Role"
+          },
+          "region": {
+            "type": "object",
+            "description": "Region name and ID.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 255,
+                "title": "ID"
+              }
+            },
+            "required": [
+              "name",
+              "id"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_.+$": {}
+            },
+            "title": "Region"
+          },
+          "zone": {
+            "type": "object",
+            "description": "Zone name and ID.",
+            "properties": {
+              "name": {
+                "type": "string",
+                "title": "Name"
+              },
+              "id": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000,
+                "title": "ID"
+              }
+            },
+            "required": [
+              "name",
+              "id"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_.+$": {}
+            },
+            "title": "Zone"
+          },
+          "profile": {
+            "type": "string",
+            "description": "Site Profile.",
+            "title": "Profile"
+          },
+          "transports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Transport name.",
+                  "title": "Name"
+                },
+                "id": {
+                  "type": "integer",
+                  "description": "Path-group id (ovewrite the global one per site?)",
+                  "title": "ID"
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_.+$": {}
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "title": "Transports"
+          },
+          "ha": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "True if HA is enabled for this site False by defaut.",
+                "title": "Enabled"
+              },
+              "interface": {
+                "type": "string",
+                "description": "HA peer interface.",
+                "title": "Interface"
+              },
+              "primary_transports": {
+                "type": "array",
+                "description": "List of site transports connected to the primary router.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Primary Transports"
+              },
+              "secondary_transports": {
+                "type": "array",
+                "description": "List of site transports connected to the primary router.",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Secondary Transports"
+              }
+            },
+            "required": [
+              "interface"
+            ],
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_.+$": {}
+            },
+            "title": "Ha"
+          }
+        },
+        "required": [
+          "role",
+          "region",
+          "zone",
+          "name"
+        ],
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_.+$": {}
+        }
+      },
+      "title": "Sdwans Ites"
+    },
     "serial_number": {
       "description": "Serial Number of the device.\nUsed for documentation purpose in the fabric documentation as can also be used by the 'eos_config_deploy_cvp' role.\n\"serial_number\" can also be set directly under node type settings.\nIf both are set, the value under node type settings takes precedence.\n",
       "type": "string",

@@ -7,7 +7,7 @@ from functools import cached_property
 
 from ansible_collections.arista.avd.plugins.filter.natural_sort import natural_sort
 from ansible_collections.arista.avd.plugins.plugin_utils.eos_designs_shared_utils.shared_utils import SharedUtils
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import get, get_item
 
 
 class UtilsMixin:
@@ -283,3 +283,22 @@ class UtilsMixin:
         Return a string to use as the name of the stun server_profile
         """
         return f"{autovpn_server_name}-{transport}-{id}"
+
+    @cached_property
+    def _wan_site_name(self) -> str | None:
+        """
+        Returns WAN site name
+        """
+        return get(self.shared_utils.switch_data_combined, "wan_site")
+
+    @cached_property
+    def _wan_site_data(self) -> dict | None:
+        """
+        Returns WAN site info
+        """
+        if not self.shared_utils.avt_role:
+            return None
+
+        sites = get(self._hostvars, "sdwan_sites", required=True)
+        # or should we look for IP
+        return get_item(sites, "name", self._wan_site_name)

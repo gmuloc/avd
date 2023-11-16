@@ -2365,6 +2365,72 @@ keys:
         valid_values:
         - sso
         - rpr
+  sdwans_ites:
+    documentation_options:
+      table: wan
+    type: list
+    primary_key: name
+    description: SD WAN Sites.
+    items:
+      type: dict
+      keys:
+        name:
+          type: str
+          description: SD-WAN site name.
+        id:
+          type: int
+          description: SD-WAN site ID.
+          convert_types:
+          - str
+          min: 1
+          max: 255
+        role:
+          type: str
+          $ref: eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/topology_role
+          required: true
+        region:
+          type: dict
+          required: true
+          $ref: eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/region
+        zone:
+          type: dict
+          required: true
+          $ref: eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/zone
+        profile:
+          type: str
+          description: Site Profile.
+        transports:
+          type: list
+          primary_key: name
+          items:
+            type: dict
+            keys:
+              name:
+                type: str
+                description: Transport name.
+              id:
+                type: int
+                description: Path-group id (ovewrite the global one per site?)
+        ha:
+          type: dict
+          keys:
+            enabled:
+              type: bool
+              description: True if HA is enabled for this site False by defaut.
+            interface:
+              type: str
+              required: true
+              description: HA peer interface.
+            primary_transports:
+              type: list
+              description: List of site transports connected to the primary router.
+              items:
+                type: str
+            secondary_transports:
+              type: list
+              description: List of site transports connected to the primary router.
+              items:
+                type: str
   serial_number:
     documentation_options:
       table: system-settings

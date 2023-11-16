@@ -163,6 +163,7 @@ sdwan_sites:
       id: 1
     ha:
       enabled: true
+      interface: Ethernet5
   - name: site2
     id: 102
     role: transit region
@@ -174,6 +175,7 @@ sdwan_sites:
       id: 2
     ha:
       enabled: true
+      interface: Ethernet5
   - name: site3
     id: 103
     role: edge

@@ -518,6 +518,19 @@ vrf instance SE_LAB
 | --------- | ---- | ---------------- |
 | 192.168.42.2 | pf2 | 104.197.58.72 |
 
+##### Path Group LAN_HA
+
+| Setting | Value |
+| ------  | ----- |
+| Path Group ID | 65535 |
+| Flow assignment | LAN |
+
+###### Local Interfaces
+
+| Interface name | Public address | STUN server profile(s) |
+| -------------- | -------------- | ---------------------- |
+| Ethernet5 | - |  |
+
 ##### Path Group MPLS-1
 
 | Setting | Value |
@@ -548,7 +561,7 @@ vrf instance SE_LAB
 
 | Policy name | Path group(s) |
 | ----------- | ------------- |
-| LBPOLICY | INTERNET<br>MPLS-1 |
+| LBPOLICY | INTERNET<br>LAN_HA<br>MPLS-1 |
 
 #### DPS policies
 
@@ -589,6 +602,11 @@ router path-selection
          name pf2
          ipv4 address 104.197.58.72
    !
+   path-group LAN_HA id 65535
+      flow assignment lan
+      !
+      local interface Ethernet5
+   !
    path-group MPLS-1 id 100
       ipsec profile AUTOVPNTUNNEL
       !
@@ -604,6 +622,7 @@ router path-selection
    load-balance policy LBPOLICY
       path-group MPLS-1
       path-group INTERNET
+      path-group LAN_HA
    !
    policy dps-policy-default
       default-match

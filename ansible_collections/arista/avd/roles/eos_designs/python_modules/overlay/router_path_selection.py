@@ -51,6 +51,23 @@ class RouterPathSelectionMixin(UtilsMixin):
                 }
             )
 
+        if self.shared_utils.avt_role:
+            site_info = self._wan_site_data
+            # TODO maybe a flag to check if ha is enabled
+            if get(site_info, "ha.enabled") is True:
+                # TODO provide way to overrid LAN_HA name
+                path_groups.append(
+                    {
+                        "name": "LAN_HA",
+                        # TODO fake transport structure
+                        "id": self._get_transport_id({"name": "LAN_HA"}),
+                        "flow_assignment": "lan",
+                        # TODO edit if this should be a list
+                        "local_interfaces": [{"name": get(site_info, "ha.interface", required=True)}],
+                        # TODO peer_static with local_peer
+                    }
+                )
+
         router_path_selection["path_groups"] = path_groups
 
         # TODO Load balance policy - for now one policy with all path_groups
@@ -75,6 +92,10 @@ class RouterPathSelectionMixin(UtilsMixin):
         """
         TODO - implement stuff from Venkit
         """
+        # TODO this should be handled better
+        if transport["name"] == "LAN_HA":
+            return 65535
+
         wan_transports = get(self.shared_utils.switch_data_combined, "transports")
         wan_transport = get_item(wan_transports, "name", transport["name"], required=True)
         if (wan_transport_id := wan_transport.get("path_group_id")) is not None:

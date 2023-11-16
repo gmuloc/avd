@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from functools import cached_property
 
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import get, get_item
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import get
 
 from .utils import UtilsMixin
 
@@ -29,15 +29,12 @@ class RouterAdaptiveVirtualTopologyMixin(UtilsMixin):
 
         router_adaptive_virtual_topology = {}
 
-        sites = get(self._hostvars, "sdwan_sites", required=True)
-        dev_site = get(self.shared_utils.switch_data_combined, "wan_site", required=True)
-        # or should we look for IP
-        site = get_item(sites, "name", dev_site)
+        site_info = self._wan_site_data
 
         router_adaptive_virtual_topology["topology_role"] = self.shared_utils.avt_role
-        router_adaptive_virtual_topology["region"] = get(site, "region", required=True)
-        router_adaptive_virtual_topology["zone"] = get(site, "zone", required=True)
-        router_adaptive_virtual_topology["site"] = {"name": dev_site, "id": get(site, "id", required=True)}
+        router_adaptive_virtual_topology["region"] = get(site_info, "region", required=True)
+        router_adaptive_virtual_topology["zone"] = get(site_info, "zone", required=True)
+        router_adaptive_virtual_topology["site"] = {"name": self._wan_site_name, "id": get(site_info, "id", required=True)}
 
         # TODO - handle Policy/Profile/VRF here
 

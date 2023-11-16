@@ -30,11 +30,11 @@ keys:
           type: str
           $ref: "eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/topology_role"
           required: true
-        region: 
+        region:
           type: dict
           required: true
           $ref: "eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/region"
-        zone: 
+        zone:
           type: dict
           required: true
           $ref: "eos_cli_config_gen#/keys/router_adaptive_virtual_topology/keys/zone"
@@ -60,6 +60,11 @@ keys:
             enabled:
               type: bool
               description: True if HA is enabled for this site False by defaut.
+            # TODO required if disabled?
+            interface:
+              type: str
+              required: true
+              description: HA peer interface.
             # TODO name
             primary_transports:
               type: list
