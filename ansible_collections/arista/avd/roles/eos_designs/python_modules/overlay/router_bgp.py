@@ -33,6 +33,8 @@ class RouterBgpMixin(UtilsMixin):
             "peer_groups": self._peer_groups(),
             "address_family_evpn": self._address_family_evpn(),
             "address_family_ipv4": self._address_family_ipv4(),
+            "address_family_ipv4_sr_te": self._address_family_ipv4_sr_te(),
+            "address_family_link_state": self._address_family_link_state(),
             "address_family_path_selection": self._address_family_path_selection(),
             "address_family_rtc": self._address_family_rtc(),
             "bgp": self._bgp_overlay_dpath(),
@@ -269,6 +271,49 @@ class RouterBgpMixin(UtilsMixin):
             address_family_evpn["domain_identifier"] = get(self.shared_utils.switch_data_combined, "ipvpn_gateway.evpn_domain_id", default="65535:1")
 
         return address_family_evpn
+
+    def _address_family_ipv4_sr_te(self) -> dict | None:
+        """Generate structured config for IPv4 SR-TE address family"""
+        if not self.shared_utils.avt_role:
+            return None
+
+        address_family_ipv4_sr_te = {
+            "peer_groups": [
+                {
+                    "name": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"],
+                    "activate": True,
+                }
+            ],
+        }
+
+        return address_family_ipv4_sr_te
+
+    def _address_family_link_state(self) -> dict | None:
+        """Generate structured config for link-state address family"""
+        if not self.shared_utils.avt_role:
+            return None
+
+        address_family_link_state = {
+            "peer_groups": [
+                {
+                    "name": self.shared_utils.bgp_peer_groups["wan_overlay_peers"]["name"],
+                    "activate": True,
+                }
+            ],
+        }
+
+        if self.shared_utils.avt_role == "pathfinder":
+            address_family_link_state["path_selection"] = {"roles": {"consumer": True, "propagator": True}}
+            address_family_link_state["bgp"] = {
+                "missing_policy": {
+                    "direction_in_action": "permit",
+                    "direction_out_action": "deny",
+                }
+            }
+        else:  # other roles are transit / edge
+            address_family_link_state["path_selection"] = {"roles": {"producer": True}}
+
+        return address_family_link_state
 
     def _address_family_path_selection(self) -> dict | None:
         """ """

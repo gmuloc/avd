@@ -352,6 +352,28 @@ router adaptive-virtual-topology
 | RR-OVERLAY-PEERS | True | default |
 | WAN-OVERLAY-PEERS | True | default |
 
+#### Router BGP IPv4 SR-TE Address Family
+
+##### IPv4 SR-TE Peer Groups
+
+| Peer Group | Activate | Route-map In | Route-map Out |
+| ---------- | -------- | ------------ | ------------- |
+| WAN-OVERLAY-PEERS | True | - | - |
+
+#### Router BGP Link-State Address Family
+
+##### Link-State Peer Groups
+
+| Peer Group | Activate | Missing policy In action | Missing policy Out action |
+| ---------- | -------- | ------------------------ | ------------------------- |
+| WAN-OVERLAY-PEERS | True | - | - |
+
+##### Link-State Path Selection configuration
+
+| Settings | Value |
+| -------- | ----- |
+| Role(s) | consumer<br>propagator |
+
 #### Router BGP Path-Selection Address Family
 
 ##### Path-Selection Peer Groups
@@ -391,6 +413,15 @@ router bgp 65000
    address-family ipv4
       no neighbor RR-OVERLAY-PEERS activate
       no neighbor WAN-OVERLAY-PEERS activate
+   !
+   address-family ipv4 sr-te
+      neighbor WAN-OVERLAY-PEERS activate
+   !
+   address-family link-state
+      bgp missing-policy direction in action permit
+      bgp missing-policy direction out action deny
+      neighbor WAN-OVERLAY-PEERS activate
+      path-selection role consumer propagator
    !
    address-family path-selection
       bgp additional-paths receive
