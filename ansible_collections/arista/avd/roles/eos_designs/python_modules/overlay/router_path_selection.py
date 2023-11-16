@@ -52,9 +52,7 @@ class RouterPathSelectionMixin(UtilsMixin):
             )
 
         if self.shared_utils.avt_role:
-            site_info = self._wan_site_data
-            # TODO maybe a flag to check if ha is enabled
-            if get(site_info, "ha.enabled") is True:
+            if self.shared_utils.sdwan_ha:
                 # TODO provide way to overrid LAN_HA name
                 path_groups.append(
                     {
@@ -64,13 +62,14 @@ class RouterPathSelectionMixin(UtilsMixin):
                         "flow_assignment": "lan",
                         # TODO edit if this should be a list
                         # This should be the LAN interface over which a DPS tunnel is built
-                        "local_interfaces": [{"name": "Ethernet4"}]
+                        "local_interfaces": [{"name": self.shared_utils.sdwan_ha_interface}],
                         "static_peers": [
-                            "router_ip": data.get("router_id"),
-                            "name": "LAN_HA",
-                            "ipv4_addresses": ipv4_addresses,
-                        ]
-                        # TODO peer_static with local_peer
+                            {
+                                "router_ip": self.shared_utils.sdwan_ha_peer_router_id,
+                                "name": "LAN_HA",
+                                "ipv4_addresses": self.shared_utils.sdwan_ha_peer_ip_addresses,
+                            }
+                        ],
                     }
                 )
 

@@ -4,13 +4,11 @@
 from __future__ import annotations
 
 from functools import cached_property
-from ipaddress import ip_interface
-from re import findall
 from typing import TYPE_CHECKING
 
 from ansible_collections.arista.avd.plugins.filter.range_expand import range_expand
 from ansible_collections.arista.avd.plugins.plugin_utils.errors import AristaAvdError, AristaAvdMissingVariableError
-from ansible_collections.arista.avd.plugins.plugin_utils.utils import default, get
+from ansible_collections.arista.avd.plugins.plugin_utils.utils import default, get, get_item
 
 if TYPE_CHECKING:
     from ansible_collections.arista.avd.plugins.plugin_utils.eos_designs_facts import EosDesignsFacts
@@ -26,33 +24,38 @@ class SdwanMixin:
     """
 
     @cached_property
-    def sdwan(self.SharedUtils) -> bool:
-        return self.shared_utils.avt_role is not None
+    def sdwan(self: SharedUtils) -> bool:
+        return self.avt_role is not None
 
     @cached_property
-    def sdwan_site_name(self.SharedUtils) -> str | None:
+    def sdwan_site_name(self: SharedUtils) -> str | None:
         if not self.sdwan:
             return None
-        return get(self.shared_utils.switch_data_combined, "wan_site", required=True)
+        return get(self.switch_data_combined, "wan_site", required=True)
 
     @cached_property
-    def sdwan_site(self.SharedUtils) -> bool:
+    def sdwan_site(self: SharedUtils) -> bool:
         if not self.sdwan:
             return False
-        sites = get(self._hostvars, "sdwan_sites", required=True)
+        sites = get(self.hostvars, "sdwan_sites", required=True)
         return get_item(sites, "name", self.sdwan_site_name)
 
     @cached_property
-    def sdwan_ha(self.SharedUtils) -> bool:
+    def sdwan_ha(self: SharedUtils) -> bool:
         return get(self.sdwan_site, "ha.enabled", False)
 
     @cached_property
     def sdwan_ha_interface(self: SharedUtils) -> str:
-        # TODO
         return "Ethernet4"
 
     @cached_property
+    def sdwan_ha_peer_interface(self: SharedUtils) -> str:
+        # TODO
+        return self.get_sdwan_peer_fact("sdwan_ha_interface")
+
+    @cached_property
     def sdwan_ha_peer(self: SharedUtils) -> str | None:
+        # TODO - do we want a better mechanism here
         if not self.sdwan_ha:
             return None
         if self.switch_data_node_group_nodes[0]["name"] == self.hostname:
@@ -64,16 +67,31 @@ class SdwanMixin:
 
     @cached_property
     def sdwan_ha_peer_router_id(self: SharedUtils) -> str:
-        return self.get_sdwan_peer_fact("router_id")
+        return self.get_sdwan_peer_fact("sdwan_ha_router_id")
+
+    @cached_property
+    def sdwan_ha_router_id(self: SharedUtils) -> str:
+        """
+        Get self.router_id from overlay.
+        """
+        return self.router_id
+
+    @cached_property
+    def sdwan_ha_ip_addresses(self: SharedUtils) -> list:
+        """
+        Return sdwan_ha_peer_interface ip_address
+        """
+        # TODO
+        return ["192.168.0.1/30"]
 
     @cached_property
     def sdwan_ha_peer_ip_addresses(self: SharedUtils) -> list:
-        return self.get_sdwan_peer_fact("ipv4_addresses")
+        return self.get_sdwan_peer_fact("sdwan_ha_ip_addresses")
 
     # TODO can the two function be reused with MLAG
     def get_sdwan_peer_fact(self: SharedUtils, key, required=True):
-        return get(self.mlag_peer_facts, key, required=required, org_key=f"avd_switch_facts.({self.sdwan_peer}).switch.{key}")
+        return get(self.sdwan_peer_facts, key, required=required, org_key=f"avd_switch_facts.({self.sdwan_ha_peer}).switch.{key}")
 
     @cached_property
     def sdwan_peer_facts(self: SharedUtils) -> EosDesignsFacts | dict:
-        return self.get_peer_facts(self.sdwan_peer, required=True)
+        return self.get_peer_facts(self.sdwan_ha_peer, required=True)

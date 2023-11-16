@@ -503,7 +503,13 @@ vrf instance SE_LAB
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet5 | - |  |
+| Ethernet4 | - |  |
+
+###### Static peers
+
+| Router IP | Name | IPv4 address(es) |
+| --------- | ---- | ---------------- |
+| 192.168.42.4 | LAN_HA | 192.168.0.1/30 |
 
 ##### Path Group MPLS-1
 
@@ -593,7 +599,11 @@ router path-selection
    path-group LAN_HA id 65535
       flow assignment lan
       !
-      local interface Ethernet5
+      local interface Ethernet4
+      !
+      peer static router-ip 192.168.42.4
+         name LAN_HA
+         ipv4 address 192.168.0.1/30
    !
    path-group MPLS-1 id 100
       ipsec profile AUTOVPNTUNNEL

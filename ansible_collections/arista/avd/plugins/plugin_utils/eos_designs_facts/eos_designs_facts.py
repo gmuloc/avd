@@ -14,10 +14,11 @@ from .overlay import OverlayMixin
 from .short_esi import ShortEsiMixin
 from .underlay import UnderlayMixin
 from .uplinks import UplinksMixin
+from .sdwan import SdwanMixin
 from .vlans import VlansMixin
 
 
-class EosDesignsFacts(AvdFacts, MlagMixin, ShortEsiMixin, OverlayMixin, UnderlayMixin, UplinksMixin, VlansMixin):
+class EosDesignsFacts(AvdFacts, MlagMixin, ShortEsiMixin, OverlayMixin, SdwanMixin, UnderlayMixin, UplinksMixin, VlansMixin):
     """
     `EosDesignsFacts` is based on `AvdFacts`, so make sure to read the description there first.
 
