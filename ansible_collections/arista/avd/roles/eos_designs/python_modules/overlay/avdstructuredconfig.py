@@ -8,6 +8,7 @@ from .ip_extcommunity_lists import IpExtCommunityListsMixin
 from .ip_security import IPSecMixin
 from .management_cvx import ManagementCvxMixin
 from .route_maps import RouteMapsMixin
+from .router_adaptive_virtual_topology import RouterAdaptiveVirtualTopologyMixin
 from .router_bfd import RouterBfdMixin
 from .router_bgp import RouterBgpMixin
 from .router_path_selection import RouterPathSelectionMixin
@@ -24,6 +25,7 @@ class AvdStructuredConfigOverlay(
     RouterBgpMixin,
     RouteMapsMixin,
     RouterPathSelectionMixin,
+    RouterAdaptiveVirtualTopologyMixin,
     StunMixin,
 ):
     """
@@ -51,6 +53,7 @@ class AvdStructuredConfigOverlay(
             [
                 self.shared_utils.overlay_cvx,
                 self.shared_utils.overlay_evpn,
+                self.shared_utils.overlay_wan,
                 self.shared_utils.overlay_vpn_ipv4,
                 self.shared_utils.overlay_vpn_ipv6,
             ]

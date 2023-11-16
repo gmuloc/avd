@@ -1059,7 +1059,9 @@ $defs:
               table: node-type-wan-configuration
             type: list
             primary_key: name
-            description: List of WAN transports connected to the node
+            description: |-
+              List of WAN transports connected to the node.
+              Override the site level config if `wan_site` is set.
             items:
               type: dict
               keys:
@@ -1069,6 +1071,7 @@ $defs:
                 interfaces:
                   type: list
                   primary_key: name
+                  min_length: 1
                   items:
                     type: dict
                     keys:
@@ -1098,6 +1101,11 @@ $defs:
             items:
               type: str
               description: Inventory_hostname_of_wan_route_reflectors.
+          wan_site:
+            documentation_options:
+              table: node-type-wan-configuration
+            type: str
+            description: The site this WAN node belongs to.
       node_groups:
         type: list
         description: Define variables related to all nodes part of this group.

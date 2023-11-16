@@ -1,0 +1,185 @@
+---
+design:
+  type: "wan"
+
+fabric_name: SDWAN
+
+default_node_types:
+  - node_type: pathfinder
+    match_hostnames:
+      - "^pf.*$"
+  - node_type: edge
+    match_hostnames:
+      - "^wan.*-site.*$"
+
+bgp_as: 65000
+
+# BGP peer groups
+bgp_peer_groups:
+  wan_overlay_peers:
+    password: "htm4AZe9mIQOO1uiMuGgYQ=="
+
+# Pathfinder
+pathfinder:
+  defaults:
+    platform: cloud-eos
+    loopback_ipv4_pool: 192.168.42.0/24
+  nodes:
+    - name: pf1
+      id: 1
+      wan_site: pf1
+      transports:
+        - name: MPLS-1
+          interfaces:
+            - name: Ethernet1
+              ip_address: 10.1.0.72/24
+    - name: pf2
+      id: 2
+      wan_site: pf2
+      transports:
+        - name: MPLS-2
+          interfaces:
+            - name: Ethernet2
+              ip_address: 10.2.0.72/24
+        - name: INTERNET
+          interfaces:
+            - name: Ethernet3
+              ip_address: 104.197.58.72
+# Edge
+edge:
+  defaults:
+    # TODO check the correct name
+    platform: cloud-eos
+    loopback_ipv4_pool: 192.168.42.0/24
+    loopback_ipv4_offset: 2
+    wan_route_reflectors: [pf1, pf2]
+  node_groups:
+    - group: SITE1
+      wan_site: site1
+      nodes:
+        - name: wan1-site1
+          id: 1
+          transports:
+            - name: MPLS-1
+              interfaces:
+                - name: Ethernet1
+            - name: MPLS-2
+              interfaces:
+                - name: Ethernet2
+        - name: wan2-site1
+          id: 2
+          transports:
+            - name: MPLS-1
+              interfaces:
+                - name: Ethernet1
+            - name: INTERNET
+              interfaces:
+                - name: Ethernet3
+    - group: SITE2
+      wan_site: site2
+      nodes:
+        - name: wan1-site2
+          id: 3
+          transports:
+            - name: MPLS-1
+              interfaces:
+                - name: Ethernet1
+            - name: MPLS-2
+              interfaces:
+                - name: Ethernet2
+        - name: wan2-site2
+          id: 4
+          transports:
+            - name: MPLS-1
+              interfaces:
+                - name: Ethernet1
+            - name: INTERNET
+              interfaces:
+                - name: Ethernet3
+    - group: SITE3
+      wan_site: site3
+      nodes:
+        - name: wan1-site3
+          id: 5
+          transports:
+            - name: MPLS-1
+              interfaces:
+                - name: Ethernet1
+            - name: MPLS-2
+              interfaces:
+                - name: Ethernet2
+                - name: Ethernet3
+
+# Transports
+transports:
+  - name: MPLS-1
+    preference: always_use
+    accessibility: private
+  - name: MPLS-2
+    preference: always_use
+    accessibility: private
+  - name: INTERNET
+    preference: backup
+    accessibility: public
+
+# AUTOVPN configuration
+autovpn:
+  control_plane:
+    ike_policy_name: IKEAUTOVPN
+    sa_policy_name: SAAUTOVPN
+    profile_name: AUTOVPNTUNNEL
+    ipsec_key: 0112140D481F07
+  data_plane:
+    ipsec_key: 0112140D481F07123713705
+
+sdwan_sites:
+  - name: pf1
+    id: 1
+    role: pathfinder
+    region:
+      name: US_West
+      id: 1
+    zone:
+      name: Zone59
+      id: 59
+  - name: pf2
+    id: 2
+    role: pathfinder
+    region:
+      name: US_East
+      id: 2
+    zone:
+      name: Zone2
+      id: 42
+  - name: site1
+    # TODO another way?
+    id: 101
+    role: edge
+    region:
+      name: US_West
+      id: 1
+    zone:
+      name: Zone1
+      id: 1
+    ha:
+      enabled: true
+  - name: site2
+    id: 102
+    role: transit region
+    region:
+      name: US_West
+      id: 1
+    zone:
+      name: Zone2
+      id: 2
+    ha:
+      enabled: true
+  - name: site3
+    id: 103
+    role: edge
+    region:
+      name: US_East
+      id: 2
+    zone:
+      name: Zone1
+      id: 1

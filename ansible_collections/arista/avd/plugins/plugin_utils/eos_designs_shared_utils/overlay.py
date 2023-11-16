@@ -37,8 +37,8 @@ class OverlayMixin:
     @cached_property
     def avt_role(self: SharedUtils) -> str | None:
         if self.underlay_router is True:
-            default_evpn_role = get(self.node_type_key_data, "default_evpn_role", default=None)
-            return get(self.switch_data_combined, "evpn_role", default=default_evpn_role)
+            default_avt_role = get(self.node_type_key_data, "default_avt_role", default=None)
+            return get(self.switch_data_combined, "avt_role", default=default_avt_role)
         return None
 
     @cached_property
@@ -144,6 +144,10 @@ class OverlayMixin:
         EVPN encapsulation based on fabric_evpn_encapsulation and node default_evpn_encapsulation.
         """
         return get(self.hostvars, "fabric_evpn_encapsulation", default=get(self.node_type_key_data, "default_evpn_encapsulation", default="vxlan"))
+
+    @cached_property
+    def overlay_wan(self: SharedUtils) -> bool:
+        return self.autovpn_role is not None
 
     @cached_property
     def overlay_evpn(self: SharedUtils) -> bool:

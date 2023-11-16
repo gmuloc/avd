@@ -163,7 +163,7 @@ DEFAULT_NODE_TYPE_KEYS = {
             "default_underlay_routing_protocol": "none",
             "connected_endpoints": True,
             "default_evpn_role": "client",
-            "mlag_support": True,
+            "mlag_support": False,
             "network_services": {
                 "l2": True,
                 "l3": True,

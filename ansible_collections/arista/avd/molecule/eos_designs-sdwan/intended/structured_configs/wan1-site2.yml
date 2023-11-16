@@ -1,0 +1,211 @@
+hostname: wan1-site2
+is_deployed: true
+router_bgp:
+  as: '65000'
+  router_id: 192.168.42.5
+  bgp:
+    default:
+      ipv4_unicast: false
+  maximum_paths:
+    paths: 4
+    ecmp: 4
+  updates:
+    wait_install: true
+  peer_groups:
+  - name: WAN-OVERLAY-PEERS
+    type: wan
+    update_source: Loopback0
+    password: htm4AZe9mIQOO1uiMuGgYQ==
+    send_community: all
+    maximum_routes: 12000
+    remote_as: '65000'
+  address_family_evpn:
+    peer_groups:
+    - name: WAN-OVERLAY-PEERS
+      activate: true
+  address_family_ipv4:
+    peer_groups:
+    - name: WAN-OVERLAY-PEERS
+      activate: false
+  address_family_path_selection:
+    peer_groups:
+    - name: WAN-OVERLAY-PEERS
+      activate: true
+      additional_paths:
+        receive: true
+        send:
+          any: true
+  neighbors:
+  - ip_address: 192.168.42.1
+    peer_group: WAN-OVERLAY-PEERS
+    description: pf1
+  - ip_address: 192.168.42.2
+    peer_group: WAN-OVERLAY-PEERS
+    description: pf2
+  vrfs:
+  - name: SE_LAB
+    router_id: 192.168.42.5
+    rd: 192.168.42.5:201
+    route_targets:
+      import:
+      - address_family: evpn
+        route_targets:
+        - 201:201
+      export:
+      - address_family: evpn
+        route_targets:
+        - 201:201
+    redistribute_routes:
+    - source_protocol: connected
+service_routing_protocols_model: multi-agent
+ip_routing: true
+vlan_internal_order:
+  allocation: ascending
+  range:
+    beginning: 1006
+    ending: 1199
+vrfs:
+- name: MGMT
+  ip_routing: false
+- name: SE_LAB
+  tenant: SE_LAB
+  ip_routing: true
+management_api_http:
+  enable_vrfs:
+  - name: MGMT
+  enable_https: true
+ethernet_interfaces:
+- name: Ethernet1
+  description: WAN_MPLS-1
+  type: routed
+  shutdown: false
+  ip_address: dhcp
+  dhcp_client_accept_default_route: true
+- name: Ethernet2
+  description: WAN_MPLS-2
+  type: routed
+  shutdown: false
+  ip_address: dhcp
+  dhcp_client_accept_default_route: true
+loopback_interfaces:
+- name: Loopback0
+  description: EVPN_Overlay_Peering
+  shutdown: false
+  ip_address: 192.168.42.5/32
+ip_security:
+  ike_policies:
+  - name: dataPlaneIkePolicy
+    local_id: 192.168.42.5
+  - name: IKEAUTOVPN
+    local_id: 192.168.42.5
+  sa_policies:
+  - name: dataPlaneSaPolicy
+  - name: SAAUTOVPN
+  profiles:
+  - name: dataPlaneIpsecProfile
+    ike_policy: dataPlaneIkePolicy
+    sa_policy: dataPlaneSaPolicy
+    connection: start
+    shared_key: 0112140D481F07123713705
+    dpd:
+      interval: 10
+      time: 50
+      action: clear
+    mode: transport
+  - name: AUTOVPNTUNNEL
+    ike_policy: IKEAUTOVPN
+    sa_policy: SAAUTOVPN
+    connection: start
+    shared_key: 0112140D481F07
+    dpd:
+      interval: 10
+      time: 50
+      action: clear
+    mode: transport
+  key_controller:
+    profile: dataPlaneIpsecProfile
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
+router_path_selection:
+  path_groups:
+  - name: MPLS-1
+    id: 100
+    ipsec_profile: AUTOVPNTUNNEL
+    local_interfaces:
+    - name: Ethernet1
+      stun:
+        server_profiles:
+        - pf1-MPLS-1-1
+    dynamic_peers:
+      enabled: true
+    static_peers:
+    - router_ip: 192.168.42.1
+      name: pf1
+      ipv4_addresses:
+      - 10.1.0.72
+  - name: MPLS-2
+    id: 200
+    ipsec_profile: AUTOVPNTUNNEL
+    local_interfaces:
+    - name: Ethernet2
+      stun:
+        server_profiles:
+        - pf2-MPLS-2-1
+    dynamic_peers:
+      enabled: true
+    static_peers:
+    - router_ip: 192.168.42.2
+      name: pf2
+      ipv4_addresses:
+      - 10.2.0.72
+  load_balance_policies:
+  - name: LBPOLICY
+    path_groups:
+    - MPLS-1
+    - MPLS-2
+  policies:
+  - name: dps-policy-default
+    default_match:
+      load_balance: LBPOLICY
+  - name: dps-policy-SE_LAB
+    default_match:
+      load_balance: LBPOLICY
+  vrfs:
+  - name: default
+    path_selection_policy: dps-policy-default
+  - name: SE_LAB
+    path_selection_policy: dps-policy-SE_LAB
+router_adaptive_virtual_topology:
+  topology_role: edge
+  region:
+    name: US_West
+    id: 1
+  zone:
+    name: Zone2
+    id: 2
+  site:
+    name: site2
+    id: 102
+stun:
+  client:
+    server_profiles:
+    - name: pf1-MPLS-1-1
+      ip_address: 10.1.0.72
+    - name: pf2-MPLS-2-1
+      ip_address: 10.2.0.72
+ip_igmp_snooping:
+  globally_enabled: true
+dps_interfaces:
+- name: Dps1
+vxlan_interface:
+  Vxlan1:
+    description: wan1-site2_VTEP
+    vxlan:
+      udp_port: 4789
+      source_interface: Loopback0
+      vrfs:
+      - name: SE_LAB
+        vni: 201

@@ -1,0 +1,15 @@
+Node Type,Node,Node Interface,Peer Type,Peer Node,Peer Interface,Node Interface Enabled
+pathfinder,pf1,Ethernet1,,,,True
+pathfinder,pf2,Ethernet2,,,,True
+pathfinder,pf2,Ethernet3,,,,True
+edge,wan1-site1,Ethernet1,,,,True
+edge,wan1-site1,Ethernet2,,,,True
+edge,wan1-site2,Ethernet1,,,,True
+edge,wan1-site2,Ethernet2,,,,True
+edge,wan1-site3,Ethernet1,,,,True
+edge,wan1-site3,Ethernet2,,,,True
+edge,wan1-site3,Ethernet3,,,,True
+edge,wan2-site1,Ethernet1,,,,True
+edge,wan2-site1,Ethernet3,,,,True
+edge,wan2-site2,Ethernet1,,,,True
+edge,wan2-site2,Ethernet3,,,,True

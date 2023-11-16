@@ -211,3 +211,36 @@
 
 {%     include 'documentation/connected-endpoints.j2' %}
 {% endif %}
+{% if sdwan_sites is arista.avd.defined %}
+{%     set regions = {} %}
+{%     for site in sdwan_sites | arista.avd.default([]) %}
+{%         do regions.setdefault(site.region.name, {"zones": {}}) %}
+{%         do regions[site.region.name].update({"id": site.region.id}) %}
+{%         do regions[site.region.name]["zones"].setdefault(site.zone.name, {"sites": {}}) %}
+{%         do regions[site.region.name]["zones"][site.zone.name].update({"id": site.zone.id}) %}
+{%         do regions[site.region.name]["zones"][site.zone.name]["sites"].update({site.name: {"id": site.id, "ha": site.ha.enabled | arista.avd.default(False)}}) %}
+{%     endfor %}
+
+### SDWAN
+
+#### Summary
+
+**TODO:** add table with summary of regions and zones?
+
+{%     for region in regions %}
+
+#### Region {{region}}
+
+Region id: {{ regions[region].id }}
+
+{# TODO maybe split further by zones - fix the deep nested retrieval of variables with items probably #}
+
+| Site | Site ID | Zone | Zone ID | HA |
+| ---- | ------- | ---- | ------- | -- |
+{%         for zone in regions[region].zones | arista.avd.default([]) %}
+{%             for site in regions[region].zones[zone].sites | arista.avd.default([]) %}
+| {{ site }} | {{ regions[region].zones[zone].sites[site].id }} | {{ zone }} | {{ regions[region].zones[zone].id }} | {{ regions[region].zones[zone].sites[site].ha }} |
+{%             endfor %}
+{%         endfor %}
+{%     endfor %}
+{% endif %}

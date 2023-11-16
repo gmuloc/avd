@@ -9,48 +9,52 @@
     | -------- | ---- | -------- | ------- | ------------------ | ----------- |
     | [<samp>&lt;node_type_keys.key&gt;</samp>](## "<node_type_keys.key>") | Dictionary |  |  |  |  |
     | [<samp>&nbsp;&nbsp;defaults</samp>](## "<node_type_keys.key>.defaults") | Dictionary |  |  |  | Define variables for all nodes of this type. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.defaults.transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.defaults.transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node.<br>Override the site level config if `wan_site` is set. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.defaults.transports.[].name") | String | Required, Unique |  |  | Transport name. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.defaults.transports.[].interfaces") | List, items: Dictionary |  |  |  |  |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.defaults.transports.[].interfaces") | List, items: Dictionary |  |  | Min Length: 1 |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.defaults.transports.[].interfaces.[].name") | String | Required, Unique |  |  | Interface to connect to the transport |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ip_address</samp>](## "<node_type_keys.key>.defaults.transports.[].interfaces.[].ip_address") | String |  |  |  | The public IP for the transport on the node with mask.<br>If not set, default to "dhcp" |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown</samp>](## "<node_type_keys.key>.defaults.transports.[].interfaces.[].shutdown") | Boolean |  | `False` |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ipsec_enabled</samp>](## "<node_type_keys.key>.defaults.transports.[].ipsec_enabled") | Boolean |  | `True` |  | Enable or disable IPSEC for a transport. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;wan_route_reflectors</samp>](## "<node_type_keys.key>.defaults.wan_route_reflectors") | List, items: String |  |  |  | List of inventory hostname acting as WAN route-reflectors. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&lt;str&gt;</samp>](## "<node_type_keys.key>.defaults.wan_route_reflectors.[]") | String |  |  |  | Inventory_hostname_of_wan_route_reflectors. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;wan_site</samp>](## "<node_type_keys.key>.defaults.wan_site") | String |  |  |  | The site this WAN node belongs to. |
     | [<samp>&nbsp;&nbsp;node_groups</samp>](## "<node_type_keys.key>.node_groups") | List, items: Dictionary |  |  |  | Define variables related to all nodes part of this group. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;group</samp>](## "<node_type_keys.key>.node_groups.[].group") | String | Required, Unique |  |  | The Node Group Name is used for MLAG domain unless set with 'mlag_domain_id'.<br>The Node Group Name is also used for peer description on downstream switches' uplinks.<br> |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nodes</samp>](## "<node_type_keys.key>.node_groups.[].nodes") | List, items: Dictionary |  |  |  | Define variables per node. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].name") | String | Required, Unique |  |  | The Node Name is used as "hostname". |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node.<br>Override the site level config if `wan_site` is set. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].name") | String | Required, Unique |  |  | Transport name. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].interfaces") | List, items: Dictionary |  |  |  |  |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].interfaces") | List, items: Dictionary |  |  | Min Length: 1 |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].interfaces.[].name") | String | Required, Unique |  |  | Interface to connect to the transport |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ip_address</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].interfaces.[].ip_address") | String |  |  |  | The public IP for the transport on the node with mask.<br>If not set, default to "dhcp" |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].interfaces.[].shutdown") | Boolean |  | `False` |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ipsec_enabled</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].transports.[].ipsec_enabled") | Boolean |  | `True` |  | Enable or disable IPSEC for a transport. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_route_reflectors</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].wan_route_reflectors") | List, items: String |  |  |  | List of inventory hostname acting as WAN route-reflectors. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&lt;str&gt;</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].wan_route_reflectors.[]") | String |  |  |  | Inventory_hostname_of_wan_route_reflectors. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.node_groups.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_site</samp>](## "<node_type_keys.key>.node_groups.[].nodes.[].wan_site") | String |  |  |  | The site this WAN node belongs to. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.node_groups.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node.<br>Override the site level config if `wan_site` is set. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].name") | String | Required, Unique |  |  | Transport name. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].interfaces") | List, items: Dictionary |  |  |  |  |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].interfaces") | List, items: Dictionary |  |  | Min Length: 1 |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].interfaces.[].name") | String | Required, Unique |  |  | Interface to connect to the transport |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ip_address</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].interfaces.[].ip_address") | String |  |  |  | The public IP for the transport on the node with mask.<br>If not set, default to "dhcp" |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].interfaces.[].shutdown") | Boolean |  | `False` |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ipsec_enabled</samp>](## "<node_type_keys.key>.node_groups.[].transports.[].ipsec_enabled") | Boolean |  | `True` |  | Enable or disable IPSEC for a transport. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_route_reflectors</samp>](## "<node_type_keys.key>.node_groups.[].wan_route_reflectors") | List, items: String |  |  |  | List of inventory hostname acting as WAN route-reflectors. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&lt;str&gt;</samp>](## "<node_type_keys.key>.node_groups.[].wan_route_reflectors.[]") | String |  |  |  | Inventory_hostname_of_wan_route_reflectors. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_site</samp>](## "<node_type_keys.key>.node_groups.[].wan_site") | String |  |  |  | The site this WAN node belongs to. |
     | [<samp>&nbsp;&nbsp;nodes</samp>](## "<node_type_keys.key>.nodes") | List, items: Dictionary |  |  |  | Define variables per node. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.nodes.[].name") | String | Required, Unique |  |  | The Node Name is used as "hostname". |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.nodes.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transports</samp>](## "<node_type_keys.key>.nodes.[].transports") | List, items: Dictionary |  |  |  | List of WAN transports connected to the node.<br>Override the site level config if `wan_site` is set. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.nodes.[].transports.[].name") | String | Required, Unique |  |  | Transport name. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.nodes.[].transports.[].interfaces") | List, items: Dictionary |  |  |  |  |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interfaces</samp>](## "<node_type_keys.key>.nodes.[].transports.[].interfaces") | List, items: Dictionary |  |  | Min Length: 1 |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;name</samp>](## "<node_type_keys.key>.nodes.[].transports.[].interfaces.[].name") | String | Required, Unique |  |  | Interface to connect to the transport |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ip_address</samp>](## "<node_type_keys.key>.nodes.[].transports.[].interfaces.[].ip_address") | String |  |  |  | The public IP for the transport on the node with mask.<br>If not set, default to "dhcp" |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown</samp>](## "<node_type_keys.key>.nodes.[].transports.[].interfaces.[].shutdown") | Boolean |  | `False` |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ipsec_enabled</samp>](## "<node_type_keys.key>.nodes.[].transports.[].ipsec_enabled") | Boolean |  | `True` |  | Enable or disable IPSEC for a transport. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_route_reflectors</samp>](## "<node_type_keys.key>.nodes.[].wan_route_reflectors") | List, items: String |  |  |  | List of inventory hostname acting as WAN route-reflectors. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&lt;str&gt;</samp>](## "<node_type_keys.key>.nodes.[].wan_route_reflectors.[]") | String |  |  |  | Inventory_hostname_of_wan_route_reflectors. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wan_site</samp>](## "<node_type_keys.key>.nodes.[].wan_site") | String |  |  |  | The site this WAN node belongs to. |
 
 === "YAML"
 
@@ -60,12 +64,13 @@
       # Define variables for all nodes of this type.
       defaults:
 
-        # List of WAN transports connected to the node
+        # List of WAN transports connected to the node.
+        # Override the site level config if `wan_site` is set.
         transports:
 
             # Transport name.
           - name: <str; required; unique>
-            interfaces:
+            interfaces: # >=1 items
 
                 # Interface to connect to the transport
               - name: <str; required; unique>
@@ -84,6 +89,9 @@
             # Inventory_hostname_of_wan_route_reflectors.
           - <str>
 
+        # The site this WAN node belongs to.
+        wan_site: <str>
+
       # Define variables related to all nodes part of this group.
       node_groups:
 
@@ -97,12 +105,13 @@
               # The Node Name is used as "hostname".
             - name: <str; required; unique>
 
-              # List of WAN transports connected to the node
+              # List of WAN transports connected to the node.
+              # Override the site level config if `wan_site` is set.
               transports:
 
                   # Transport name.
                 - name: <str; required; unique>
-                  interfaces:
+                  interfaces: # >=1 items
 
                       # Interface to connect to the transport
                     - name: <str; required; unique>
@@ -121,12 +130,16 @@
                   # Inventory_hostname_of_wan_route_reflectors.
                 - <str>
 
-          # List of WAN transports connected to the node
+              # The site this WAN node belongs to.
+              wan_site: <str>
+
+          # List of WAN transports connected to the node.
+          # Override the site level config if `wan_site` is set.
           transports:
 
               # Transport name.
             - name: <str; required; unique>
-              interfaces:
+              interfaces: # >=1 items
 
                   # Interface to connect to the transport
                 - name: <str; required; unique>
@@ -144,6 +157,9 @@
 
               # Inventory_hostname_of_wan_route_reflectors.
             - <str>
+
+          # The site this WAN node belongs to.
+          wan_site: <str>
 
       # Define variables per node.
       nodes:
@@ -151,12 +167,13 @@
           # The Node Name is used as "hostname".
         - name: <str; required; unique>
 
-          # List of WAN transports connected to the node
+          # List of WAN transports connected to the node.
+          # Override the site level config if `wan_site` is set.
           transports:
 
               # Transport name.
             - name: <str; required; unique>
-              interfaces:
+              interfaces: # >=1 items
 
                   # Interface to connect to the transport
                 - name: <str; required; unique>
@@ -174,4 +191,7 @@
 
               # Inventory_hostname_of_wan_route_reflectors.
             - <str>
+
+          # The site this WAN node belongs to.
+          wan_site: <str>
     ```
