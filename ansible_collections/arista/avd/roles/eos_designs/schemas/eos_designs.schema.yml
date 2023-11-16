@@ -2418,9 +2418,15 @@ keys:
               type: bool
               description: True if HA is enabled for this site False by defaut.
             interface:
-              type: str
+              type: dict
               required: true
               description: HA peer interface.
+              keys:
+                name:
+                  type: str
+                  required: true
+                shutdown:
+                  type: bool
             primary_transports:
               type: list
               description: List of site transports connected to the primary router.

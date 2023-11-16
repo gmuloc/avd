@@ -15974,8 +15974,25 @@
                 "title": "Enabled"
               },
               "interface": {
-                "type": "string",
+                "type": "object",
                 "description": "HA peer interface.",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "Name"
+                  },
+                  "shutdown": {
+                    "type": "boolean",
+                    "title": "Shutdown"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_.+$": {}
+                },
                 "title": "Interface"
               },
               "primary_transports": {

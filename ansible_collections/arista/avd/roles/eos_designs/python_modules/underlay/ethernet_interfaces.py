@@ -158,6 +158,31 @@ class EthernetInterfacesMixin(UtilsMixin):
                         context="Ethernet Interfaces defined for underlay",
                         context_keys=["name"],
                     )
+        if self.shared_utils.avt_role:
+            site_info = self._wan_site_data
+            # TODO maybe a flag to check if ha is enabled
+            if get(site_info, "ha.enabled") is True:
+                # TODO maybe should be a list
+                peer_interface = get(site_info, "ha.interface", required=True)
+
+                ethernet_interface = {
+                    "name": peer_interface["name"],
+                    "description": self.shared_utils.interface_descriptions.underlay_ethernet_interfaces("underlay_wan", transport["name"], ""),
+                    "type": "routed",
+                    "shutdown": interface.get("shutdown", False),
+                }
+
+                    ethernet_interface["ip_address"] = interface.get("ip_address", "dhcp")
+                    if ethernet_interface["ip_address"] == "dhcp":
+                        ethernet_interface["dhcp_client_accept_default_route"] = True
+
+                    append_if_not_duplicate(
+                        list_of_dicts=ethernet_interfaces,
+                        primary_key="name",
+                        new_dict=ethernet_interface,
+                        context="Ethernet Interfaces defined for underlay",
+                        context_keys=["name"],
+                    )
 
         if ethernet_interfaces:
             return ethernet_interfaces

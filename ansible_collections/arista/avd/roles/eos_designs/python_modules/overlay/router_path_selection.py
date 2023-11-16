@@ -63,7 +63,13 @@ class RouterPathSelectionMixin(UtilsMixin):
                         "id": self._get_transport_id({"name": "LAN_HA"}),
                         "flow_assignment": "lan",
                         # TODO edit if this should be a list
-                        "local_interfaces": [{"name": get(site_info, "ha.interface", required=True)}],
+                        # This should be the LAN interface over which a DPS tunnel is built
+                        "local_interfaces": [{"name": "Ethernet4"}]
+                        "static_peers": [
+                            "router_ip": data.get("router_id"),
+                            "name": "LAN_HA",
+                            "ipv4_addresses": ipv4_addresses,
+                        ]
                         # TODO peer_static with local_peer
                     }
                 )

@@ -62,9 +62,15 @@ keys:
               description: True if HA is enabled for this site False by defaut.
             # TODO required if disabled?
             interface:
-              type: str
+              type: dict
               required: true
               description: HA peer interface.
+              keys:
+                name:
+                  type: str
+                  required: true
+                shutdown:
+                  type: bool
             # TODO name
             primary_transports:
               type: list

@@ -34,7 +34,9 @@
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id</samp>](## "sdwans_ites.[].transports.[].id") | Integer |  |  |  | Path-group id (ovewrite the global one per site?) |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;ha</samp>](## "sdwans_ites.[].ha") | Dictionary |  |  |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;enabled</samp>](## "sdwans_ites.[].ha.enabled") | Boolean |  |  |  | True if HA is enabled for this site False by defaut. |
-    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interface</samp>](## "sdwans_ites.[].ha.interface") | String | Required |  |  | HA peer interface. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;interface</samp>](## "sdwans_ites.[].ha.interface") | Dictionary | Required |  |  | HA peer interface. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name</samp>](## "sdwans_ites.[].ha.interface.name") | String | Required |  |  |  |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shutdown</samp>](## "sdwans_ites.[].ha.interface.shutdown") | Boolean |  |  |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;primary_transports</samp>](## "sdwans_ites.[].ha.primary_transports") | List, items: String |  |  |  | List of site transports connected to the primary router. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;&lt;str&gt;</samp>](## "sdwans_ites.[].ha.primary_transports.[]") | String |  |  |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;secondary_transports</samp>](## "sdwans_ites.[].ha.secondary_transports") | List, items: String |  |  |  | List of site transports connected to the primary router. |
@@ -103,7 +105,9 @@
           enabled: <bool>
 
           # HA peer interface.
-          interface: <str; required>
+          interface: # required
+            name: <str; required>
+            shutdown: <bool>
 
           # List of site transports connected to the primary router.
           primary_transports:
