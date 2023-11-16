@@ -99,21 +99,21 @@ vlan internal order ascending range 1006 1199
 | Policy name | IKE lifetime | Encryption | DH group | Local ID |
 | ----------- | ------------ | ---------- | -------- | -------- |
 | dataPlaneIkePolicy | - | - | - | 192.168.42.1 |
-| IKEAUTOVPN | - | - | - | 192.168.42.1 |
+| controlPlaneIkePolicy | - | - | - | 192.168.42.1 |
 
 ### Security Association policies
 
 | Policy name | ESP Integrity | ESP Encryption | PFS DH Group |
 | ----------- | ------------- | -------------- | ------------ |
-| dataPlaneSaPolicy | - | - | - |
-| SAAUTOVPN | - | - | - |
+| dataPlaneSaPolicy | - | aes128 | 14 |
+| controlPlaneSaPolicy | - | aes128 | 14 |
 
 ### IPSec profiles
 
 | Profile name | IKE policy | SA policy | Connection | DPD Interval | DPD Time | DPD action | Mode |
 | ------------ | ---------- | ----------| ---------- | ------------ | -------- | ---------- | ---- |
 | dataPlaneIpsecProfile | dataPlaneIkePolicy | dataPlaneSaPolicy | start | - | - | - | transport |
-| AUTOVPNTUNNEL | IKEAUTOVPN | SAAUTOVPN | start | - | - | - | transport |
+| controlPlaneIpsecProfile | controlPlaneIkePolicy | controlPlaneSaPolicy | start | - | - | - | transport |
 
 ### IP Security Configuration
 
@@ -124,12 +124,16 @@ ip security
    ike policy dataPlaneIkePolicy
       local-id 192.168.42.1
    !
-   ike policy IKEAUTOVPN
+   ike policy controlPlaneIkePolicy
       local-id 192.168.42.1
    !
    sa policy dataPlaneSaPolicy
+      esp encryption aes128
+      pfs dh-group 14
    !
-   sa policy SAAUTOVPN
+   sa policy controlPlaneSaPolicy
+      esp encryption aes128
+      pfs dh-group 14
    !
    profile dataPlaneIpsecProfile
       ike-policy dataPlaneIkePolicy
@@ -139,9 +143,9 @@ ip security
       dpd 10 50 clear
       mode transport
    !
-   profile AUTOVPNTUNNEL
-      ike-policy IKEAUTOVPN
-      sa-policy SAAUTOVPN
+   profile controlPlaneIpsecProfile
+      ike-policy controlPlaneIkePolicy
+      sa-policy controlPlaneSaPolicy
       connection start
       shared-key 7 0112140D481F07
       dpd 10 50 clear
@@ -479,7 +483,7 @@ vrf instance MGMT
 | Setting | Value |
 | ------  | ----- |
 | Path Group ID | 100 |
-| IPSec profile | AUTOVPNTUNNEL |
+| IPSec profile | controlPlaneIpsecProfile |
 
 ###### Local Interfaces
 
@@ -515,7 +519,7 @@ router path-selection
    peer dynamic source stun
    !
    path-group MPLS-1 id 100
-      ipsec profile AUTOVPNTUNNEL
+      ipsec profile controlPlaneIpsecProfile
       !
       local interface Ethernet1
    !

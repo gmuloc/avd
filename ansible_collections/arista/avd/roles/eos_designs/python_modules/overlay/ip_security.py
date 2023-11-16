@@ -75,7 +75,13 @@ class IPSecMixin(UtilsMixin):
         """
         Return an SA policy
         """
-        return {"name": name}
+        sa_policy = {"name": name}
+        if self.shared_utils.avt_role:
+            # TODO, provide options to change this sdwan_wide
+            sa_policy["esp"] = {"encryption": "aes128"}
+            sa_policy["pfs_dh_group"] = 14
+        return sa_policy
+
 
     def _profile(self, profile_name: str, ike_policy_name: str, sa_policy_name: str, key: str) -> dict | None:
         """

@@ -103,11 +103,17 @@ ip_security:
   ike_policies:
   - name: dataPlaneIkePolicy
     local_id: 192.168.42.1
-  - name: IKEAUTOVPN
+  - name: controlPlaneIkePolicy
     local_id: 192.168.42.1
   sa_policies:
   - name: dataPlaneSaPolicy
-  - name: SAAUTOVPN
+    esp:
+      encryption: aes128
+    pfs_dh_group: 14
+  - name: controlPlaneSaPolicy
+    esp:
+      encryption: aes128
+    pfs_dh_group: 14
   profiles:
   - name: dataPlaneIpsecProfile
     ike_policy: dataPlaneIkePolicy
@@ -119,9 +125,9 @@ ip_security:
       time: 50
       action: clear
     mode: transport
-  - name: AUTOVPNTUNNEL
-    ike_policy: IKEAUTOVPN
-    sa_policy: SAAUTOVPN
+  - name: controlPlaneIpsecProfile
+    ike_policy: controlPlaneIkePolicy
+    sa_policy: controlPlaneSaPolicy
     connection: start
     shared_key: 0112140D481F07
     dpd:
@@ -139,7 +145,7 @@ router_path_selection:
   path_groups:
   - name: MPLS-1
     id: 100
-    ipsec_profile: AUTOVPNTUNNEL
+    ipsec_profile: controlPlaneIpsecProfile
     local_interfaces:
     - name: Ethernet1
     dynamic_peers: null
