@@ -82,7 +82,6 @@ class IPSecMixin(UtilsMixin):
             sa_policy["pfs_dh_group"] = 14
         return sa_policy
 
-
     def _profile(self, profile_name: str, ike_policy_name: str, sa_policy_name: str, key: str) -> dict | None:
         """
         Return one IPsec Profile

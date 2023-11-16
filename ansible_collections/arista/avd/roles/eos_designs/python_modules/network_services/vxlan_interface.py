@@ -79,7 +79,6 @@ class VxlanInterfaceMixin(UtilsMixin):
         vnis = []
         for tenant in self._filtered_tenants:
             for vrf in tenant["vrfs"]:
-
                 if not self.shared_utils.autovpn_role:
                     for svi in vrf["svis"]:
                         if vlan := self._get_vxlan_interface_config_for_vlan(svi, tenant):

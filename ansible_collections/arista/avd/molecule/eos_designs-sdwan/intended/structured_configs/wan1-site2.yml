@@ -103,6 +103,19 @@ loopback_interfaces:
   description: EVPN_Overlay_Peering
   shutdown: false
   ip_address: 192.168.42.5/32
+flow_tracking:
+  hardware:
+    trackers:
+    - name: flowTracker
+      record_export:
+        on_inactive_timeout: 70000
+        on_interval: 5000
+      exporters:
+      - name: exp
+        collector:
+          host: 127.0.0.1
+        local_interface: Loopback0
+        template_interval: 5000
 ip_security:
   ike_policies:
   - name: dataPlaneIkePolicy
@@ -228,6 +241,10 @@ ip_igmp_snooping:
   globally_enabled: true
 dps_interfaces:
 - name: Dps1
+  tcp_mss_ceiling:
+    ipv4: 1000
+  flow_tracker:
+    hardware: flowTracker
 vxlan_interface:
   Vxlan1:
     description: wan1-site2_VTEP

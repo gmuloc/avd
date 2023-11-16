@@ -28,4 +28,13 @@ class DpsInterfacesMixin(UtilsMixin):
         if not self.shared_utils.autovpn_role:
             return None
 
-        return [{"name": "Dps1"}]
+        dps1 = {"name": "Dps1"}
+
+        # Trailblazer default, may need to change
+        if self.shared_utils.avt_role:
+            # TODO what IP to use?
+            dps1["tcp_mss_ceiling"] = {"ipv4": 1000}
+            # TODO - even for virtual devices?
+            dps1["flow_tracker"] = {"hardware": "flowTracker"}
+
+        return [dps1]

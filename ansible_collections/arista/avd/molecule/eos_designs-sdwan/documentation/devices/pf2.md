@@ -4,6 +4,8 @@
 
 - [Management](#management)
   - [Management API HTTP](#management-api-http)
+- [Monitoring](#monitoring)
+  - [Flow Tracking](#flow-tracking)
 - [Spanning Tree](#spanning-tree)
   - [Spanning Tree Summary](#spanning-tree-summary)
   - [Spanning Tree Device Configuration](#spanning-tree-device-configuration)
@@ -62,6 +64,38 @@ management api http-commands
    !
    vrf MGMT
       no shutdown
+```
+
+## Monitoring
+
+### Flow Tracking
+
+#### Flow Tracking Hardware
+
+##### Trackers Summary
+
+| Tracker Name | Record Export On Inactive Timeout | Record Export On Interval | Number of Exporters | Applied On |
+| ------------ | --------------------------------- | ------------------------- | ------------------- | ---------- |
+| flowTracker | 70000 | 5000 | 1 |  |
+
+##### Exporters Summary
+
+| Tracker Name | Exporter Name | Collector IP/Host | Collector Port | Local Interface |
+| ------------ | ------------- | ----------------- | -------------- | --------------- |
+| flowTracker | exp | - | - | Loopback0 |
+
+#### Flow Tracking Configuration
+
+```eos
+!
+flow tracking hardware
+   tracker flowTracker
+      record export on inactive timeout 70000
+      record export on interval 5000
+      exporter exp
+         collector 127.0.0.1
+         local interface Loopback0
+         template interval 5000
 ```
 
 ## Spanning Tree
@@ -160,13 +194,15 @@ ip security
 
 | Interface | IP address | Shutdown | MTU | Flow tracker(s) | TCP MSS Ceiling |
 | --------- | ---------- | -------- | --- | --------------- | --------------- |
-| Dps1 | - | - | - |  |  |
+| Dps1 | - | - | - | Hardware: flowTracker | IPv4: 1000 |
 
 #### DPS Interfaces Device Configuration
 
 ```eos
 !
 interface Dps1
+   flow tracker hardware flowTracker
+   tcp mss ceiling ipv4 1000
 ```
 
 ### Ethernet Interfaces
