@@ -25260,6 +25260,12 @@
       "description": "PREVIEW: This key is currently not supported\n\nName of the SSL profile used for DTLS on WAN STUN connections.\n\nWhen using automatic ceritficate deployment via CloudVision this name must be the same on all WAN routers.",
       "title": "Wan STUN Dtls Profile Name"
     },
+    "wan_use_dps_as_router_id": {
+      "description": "PREVIEW: This key is currently not supported\n\nUse Dps1 interface instead of Loopback0 for BGP router-id.",
+      "type": "boolean",
+      "default": false,
+      "title": "Wan Use DPS As Router ID"
+    },
     "wan_virtual_topologies": {
       "type": "object",
       "description": "PREVIEW: WAN Preview\n\nConfigure Virtual Topologies for CV Pathfinder and AutoVPN.\n\nAuto create a control plane profile/policy/application and enforce it being first in the default VRF.",

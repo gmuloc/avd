@@ -3866,6 +3866,15 @@ keys:
         under node settings'
       removed: true
       remove_in_version: 4.6.0-dev1
+  wan_use_dps_as_router_id:
+    documentation_options:
+      table: wan-settings
+    description: 'PREVIEW: This key is currently not supported
+
+
+      Use Dps1 interface instead of Loopback0 for BGP router-id.'
+    type: bool
+    default: false
   wan_virtual_topologies:
     type: dict
     description: 'PREVIEW: WAN Preview

@@ -521,3 +521,7 @@ class WanMixin:
             return None
 
         return get(self.hostvars, "wan_stun_dtls_profile_name", default="STUN-DTLS")
+
+    @cached_property
+    def wan_use_dps_as_router_id(self) -> bool:
+        return self.is_wan_router and get(self.hostvars, "wan_use_dps_as_router_id", default=False)

@@ -28,36 +28,9 @@ class LoopbackInterfacesMixin(UtilsMixin):
 
         loopback_interfaces = []
         # Loopback 0
-        loopback0 = {
-            "name": "Loopback0",
-            "description": self.shared_utils.interface_descriptions.router_id_loopback_interface(
-                InterfaceDescriptionData(shared_utils=self.shared_utils, interface="Loopback0", description=get(self._hostvars, "overlay_loopback_description"))
-            ),
-            "shutdown": False,
-            "ip_address": f"{self.shared_utils.router_id}/32",
-        }
-
-        if self.shared_utils.ipv6_router_id is not None:
-            loopback0["ipv6_address"] = f"{self.shared_utils.ipv6_router_id}/128"
-
-        if self.shared_utils.underlay_ospf:
-            loopback0["ospf_area"] = self.shared_utils.underlay_ospf_area
-
-        if self.shared_utils.underlay_ldp:
-            loopback0["mpls"] = {"ldp": {"interface": True}}
-
-        if self.shared_utils.underlay_isis:
-            isis_config = {"isis_enable": self.shared_utils.isis_instance_name, "isis_passive": True}
-            if self.shared_utils.underlay_sr:
-                isis_config["node_segment"] = {"ipv4_index": self._node_sid}
-                if self.shared_utils.underlay_ipv6:
-                    isis_config["node_segment"].update({"ipv6_index": self._node_sid})
-
-            loopback0.update(isis_config)
-
-        loopback0 = {key: value for key, value in loopback0.items() if value is not None}
-
-        loopback_interfaces.append(loopback0)
+        if not self.shared_utils.wan_use_dps_as_router_id:
+            loopback0 = self._loopback0()
+            loopback_interfaces.append(loopback0)
 
         # VTEP loopback
         if (
@@ -98,3 +71,38 @@ class LoopbackInterfacesMixin(UtilsMixin):
             raise AristaAvdMissingVariableError(f"'id' is not set on '{self.shared_utils.hostname}' and is required to set node SID")
         node_sid_base = int(get(self.shared_utils.switch_data_combined, "node_sid_base", 0))
         return self.shared_utils.id + node_sid_base
+
+    def _loopback0(self) -> dict:
+        """
+        Generate Loopback0 configruation
+        """
+        loopback0 = {
+            "name": "Loopback0",
+            "description": self.shared_utils.interface_descriptions.router_id_loopback_interface(
+                InterfaceDescriptionData(shared_utils=self.shared_utils, interface="Loopback0", description=get(self._hostvars, "overlay_loopback_description"))
+            ),
+            "shutdown": False,
+            "ip_address": f"{self.shared_utils.router_id}/32",
+        }
+
+        if self.shared_utils.ipv6_router_id is not None:
+            loopback0["ipv6_address"] = f"{self.shared_utils.ipv6_router_id}/128"
+
+        if self.shared_utils.underlay_ospf:
+            loopback0["ospf_area"] = self.shared_utils.underlay_ospf_area
+
+        if self.shared_utils.underlay_ldp:
+            loopback0["mpls"] = {"ldp": {"interface": True}}
+
+        if self.shared_utils.underlay_isis:
+            isis_config = {"isis_enable": self.shared_utils.isis_instance_name, "isis_passive": True}
+            if self.shared_utils.underlay_sr:
+                isis_config["node_segment"] = {"ipv4_index": self._node_sid}
+                if self.shared_utils.underlay_ipv6:
+                    isis_config["node_segment"].update({"ipv6_index": self._node_sid})
+
+            loopback0.update(isis_config)
+
+        loopback0 = {key: value for key, value in loopback0.items() if value is not None}
+
+        return loopback0

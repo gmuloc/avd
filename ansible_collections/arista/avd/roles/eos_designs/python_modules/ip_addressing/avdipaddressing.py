@@ -194,6 +194,9 @@ class AvdIpAddressing(AvdFacts, UtilsMixin):
                 loopback_ipv4_offset=self._loopback_ipv4_offset,
             )
 
+        if self.shared_utils.wan_use_dps_as_router_id:
+            return self.vtep_ip()
+
         offset = self._id + self._loopback_ipv4_offset
         return get_ip_from_pool(self._loopback_ipv4_pool, 32, offset, 0)
 

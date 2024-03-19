@@ -2,7 +2,7 @@ hostname: cv-pathfinder-edge2B
 is_deployed: true
 router_bgp:
   as: '65000'
-  router_id: 192.168.42.3
+  router_id: 192.168.142.3
   bgp:
     default:
       ipv4_unicast: false
@@ -59,7 +59,7 @@ router_bgp:
     description: cv-pathfinder-pathfinder
   vrfs:
   - name: IT
-    router_id: 192.168.42.3
+    router_id: 192.168.142.3
     neighbors:
     - ip_address: 172.17.0.8
       peer_group: IPv4-UNDERLAY-PEERS
@@ -69,7 +69,7 @@ router_bgp:
       peer_group: IPv4-UNDERLAY-PEERS
       remote_as: '65199'
       description: site-ha-enabled-leaf2B_Ethernet2.1000_vrf_IT
-    rd: 192.168.42.3:1000
+    rd: 192.168.142.3:1000
     route_targets:
       import:
       - address_family: evpn
@@ -82,7 +82,7 @@ router_bgp:
     redistribute_routes:
     - source_protocol: connected
   - name: PROD
-    router_id: 192.168.42.3
+    router_id: 192.168.142.3
     neighbors:
     - ip_address: 172.17.0.8
       peer_group: IPv4-UNDERLAY-PEERS
@@ -92,7 +92,7 @@ router_bgp:
       peer_group: IPv4-UNDERLAY-PEERS
       remote_as: '65199'
       description: site-ha-enabled-leaf2B_Ethernet2.142_vrf_PROD
-    rd: 192.168.42.3:142
+    rd: 192.168.142.3:142
     route_targets:
       import:
       - address_family: evpn
@@ -105,7 +105,7 @@ router_bgp:
     redistribute_routes:
     - source_protocol: connected
   - name: ATTRACTED-VRF-FROM-UPLINK
-    router_id: 192.168.42.3
+    router_id: 192.168.142.3
     neighbors:
     - ip_address: 172.17.0.8
       peer_group: IPv4-UNDERLAY-PEERS
@@ -115,7 +115,7 @@ router_bgp:
       peer_group: IPv4-UNDERLAY-PEERS
       remote_as: '65199'
       description: site-ha-enabled-leaf2B_Ethernet2.666_vrf_ATTRACTED-VRF-FROM-UPLINK
-    rd: 192.168.42.3:666
+    rd: 192.168.142.3:666
     route_targets:
       import:
       - address_family: evpn
@@ -128,7 +128,7 @@ router_bgp:
     redistribute_routes:
     - source_protocol: connected
   - name: default
-    rd: 192.168.42.3:1
+    rd: 192.168.142.3:1
     route_targets:
       import:
       - address_family: evpn
@@ -295,11 +295,7 @@ ethernet_interfaces:
   description: Colt_10423
   flow_tracker:
     hardware: FLOW-TRACKER
-loopback_interfaces:
-- name: Loopback0
-  description: Router_ID
-  shutdown: false
-  ip_address: 192.168.42.3/32
+loopback_interfaces: []
 as_path:
   access_lists:
   - name: ASPATH-WAN

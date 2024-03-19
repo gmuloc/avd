@@ -34,6 +34,7 @@
     | [<samp>wan_stun_dtls_disable</samp>](## "wan_stun_dtls_disable") | Boolean |  | `False` |  | PREVIEW: This key is currently not supported<br><br>WAN STUN connections will be authenticated and secured with DTLS by default.<br>For CV-Pathfinder deployments CloudVision will automatically deploy certificates on the devices.<br>In case of AutoVPN the certificates must be deployed manually to all devices.<br><br>For LAB environments this can be disabled, if there are no certificates available.<br>This should NOT be disabled for a WAN network connected to the internet, since it will leave the STUN service exposed with no authentication. |
     | [<samp>wan_stun_dtls_profile_name</samp>](## "wan_stun_dtls_profile_name") | String |  | `STUN-DTLS` |  | PREVIEW: This key is currently not supported<br><br>Name of the SSL profile used for DTLS on WAN STUN connections.<br><br>When using automatic ceritficate deployment via CloudVision this name must be the same on all WAN routers. |
     | [<samp>wan_transit</samp>](## "wan_transit") <span style="color:red">removed</span> | Dictionary |  |  |  | The `wan_transit` node type was introduced and removed while the AVD WAN feature was in PREVIEW MODE.<br>Migrate your existing transit nodes to using `wan_router` node_type and set<br>`cv_pathfinder_transit_mode: region` under node settings.<span style="color:red">This key was removed. Support was removed in AVD version 4.6.0-dev1. Use <samp>node_type `wan_router` and set `cv_pathfinder_transit_mode: region` under node settings</samp> instead.</span> |
+    | [<samp>wan_use_dps_as_router_id</samp>](## "wan_use_dps_as_router_id") | Boolean |  | `False` |  | PREVIEW: This key is currently not supported<br><br>Use Dps1 interface instead of Loopback0 for BGP router-id. |
 
 === "YAML"
 
@@ -131,4 +132,9 @@
     #
     # When using automatic ceritficate deployment via CloudVision this name must be the same on all WAN routers.
     wan_stun_dtls_profile_name: <str; default="STUN-DTLS">
+
+    # PREVIEW: This key is currently not supported
+    #
+    # Use Dps1 interface instead of Loopback0 for BGP router-id.
+    wan_use_dps_as_router_id: <bool; default=False>
     ```

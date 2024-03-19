@@ -4,3 +4,5 @@
 
 wan_ha:
   lan_ha_path_group_name: CUSTOM_LAN_HA
+
+wan_use_dps_as_router_id: true
