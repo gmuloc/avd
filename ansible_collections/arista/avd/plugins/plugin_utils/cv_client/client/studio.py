@@ -23,6 +23,11 @@ from ..api.arista.studio.v1 import (
     InterfaceInfos,
     TopologyInput,
     TopologyInputKey,
+    TopologyInputConfig,
+    TopologyInputStreamRequest,
+    TopologyInputConfigSetSomeRequest,
+    TopologyInputConfigServiceStub,
+    TopologyInputServiceStub,
 )
 from ..api.fmp import RepeatedString
 from .exceptions import CVResourceNotFound, get_cv_client_exception
@@ -414,91 +419,89 @@ class StudioMixin:
             )
         return await gather(*coroutines)
 
-    # Future versions for once topology studio API is available.
-    #
-    # async def _future__get_topology_studio_inputs(
-    #     self: CVClient,
-    #     workspace_id: str,
-    #     device_ids: list[str] | None = None,
-    #     time: datetime | None = None,
-    #     timeout: float = 10.0,
-    # ) -> list[TopologyInput]:
-    #     """
-    #     TODO: Once the topology studio inputs API is public, this function can be put in place.
-    #           It will probably need some version detection to see if the API is supported.
+    async def _future__get_topology_studio_inputs(
+        self: CVClient,
+        workspace_id: str,
+        device_ids: list[str] | None = None,
+        time: datetime | None = None,
+        timeout: float = 10.0,
+    ) -> list[TopologyInput]:
+        """
+        TODO: Once the topology studio inputs API is public, this function can be put in place.
+              It will probably need some version detection to see if the API is supported.
 
-    #     Get Topology Studio Inputs using arista.studio.v1.TopologyInputsService.GetAll and arista.studio.v1.TopologyInputsConfigService.GetAll APIs.
+        Get Topology Studio Inputs using arista.studio.v1.TopologyInputsService.GetAll and arista.studio.v1.TopologyInputsConfigService.GetAll APIs.
 
-    #     Parameters:
-    #         workspace_id: Unique identifier of the Workspace for which the information is fetched. Use "" for mainline.
-    #         device_ids: List of Device IDs / Serial numbers to get inputs for.
-    #         time: Timestamp from which the information is fetched. `now()` if not set.
-    #         timeout: Timeout in seconds.
+        Parameters:
+            workspace_id: Unique identifier of the Workspace for which the information is fetched. Use "" for mainline.
+            device_ids: List of Device IDs / Serial numbers to get inputs for.
+            time: Timestamp from which the information is fetched. `now()` if not set.
+            timeout: Timeout in seconds.
 
-    #     Returns:
-    #         Inputs object.
-    #     """
-    #     request = TopologyInputStreamRequest(partial_eq_filter=[], time=time)
-    #     if device_ids:
-    #         for device_id in device_ids:
-    #             request.partial_eq_filter.append(
-    #                 TopologyInput(
-    #                     key=TopologyInputKey(workspace_id=workspace_id, device_id=device_id),
-    #                 )
-    #             )
-    #     else:
-    #         request.partial_eq_filter.append(
-    #             TopologyInput(
-    #                 key=TopologyInputKey(workspace_id=workspace_id),
-    #             )
-    #         )
-    #     client = TopologyInputServiceStub(self._channel)
-    #     topology_inputs = []
-    #     try:
-    #         responses = client.get_all(request, metadata=self._metadata, timeout=timeout)
-    #         async for response in responses:
-    #             topology_inputs.append(response.value)
-    #         return topology_inputs
-    #     except Exception as e:
-    #         raise get_cv_client_exception(e, f"Workspace ID '{workspace_id}', Device IDs '{device_ids}'") or e
+        Returns:
+            Inputs object.
+        """
+        request = TopologyInputStreamRequest(partial_eq_filter=[], time=time)
+        if device_ids:
+            for device_id in device_ids:
+                request.partial_eq_filter.append(
+                    TopologyInput(
+                        key=TopologyInputKey(workspace_id=workspace_id, device_id=device_id),
+                    )
+                )
+        else:
+            request.partial_eq_filter.append(
+                TopologyInput(
+                    key=TopologyInputKey(workspace_id=workspace_id),
+                )
+            )
+        client = TopologyInputServiceStub(self._channel)
+        topology_inputs = []
+        try:
+            responses = client.get_all(request, metadata=self._metadata, timeout=timeout)
+            async for response in responses:
+                topology_inputs.append(response.value)
+            return topology_inputs
+        except Exception as e:
+            raise get_cv_client_exception(e, f"Workspace ID '{workspace_id}', Device IDs '{device_ids}'") or e
 
-    # async def _future_set_topology_studio_inputs(
-    #     self: CVClient,
-    #     workspace_id: str,
-    #     device_inputs: list[tuple[str, str]],
-    #     timeout: float = 30.0,
-    # ) -> list[TopologyInputKey]:
-    #     """
-    #     TODO: Once the topology studio inputs API is public, this function can be put in place.
-    #           It will probably need some version detection to see if the API is supported.
+    async def _future_set_topology_studio_inputs(
+        self: CVClient,
+        workspace_id: str,
+        device_inputs: list[tuple[str, str]],
+        timeout: float = 30.0,
+    ) -> list[TopologyInputKey]:
+        """
+        TODO: Once the topology studio inputs API is public, this function can be put in place.
+              It will probably need some version detection to see if the API is supported.
 
-    #     Set Topology Studio Inputs using arista.studio.v1.TopologyInputsConfigService.Set API.
+        Set Topology Studio Inputs using arista.studio.v1.TopologyInputsConfigService.Set API.
 
-    #     Parameters:
-    #         workspace_id: Unique identifier of the Workspace for which the information is set.
-    #         device_inputs: List of Tuples with the format (<device_id>, <hostname>).
-    #         timeout: Timeout in seconds.
+        Parameters:
+            workspace_id: Unique identifier of the Workspace for which the information is set.
+            device_inputs: List of Tuples with the format (<device_id>, <hostname>).
+            timeout: Timeout in seconds.
 
-    #     Returns:
-    #         TopologyInputKey objects after being set including any server-generated values.
-    #     """
-    #     request = TopologyInputConfigSetSomeRequest(
-    #         values=[
-    #             TopologyInputConfig(
-    #                 key=TopologyInputKey(workspace_id=workspace_id, device_id=device_id),
-    #                 device_info=DeviceInfo(device_id=device_id, hostname=hostname),
-    #             )
-    #             for device_id, hostname in device_inputs
-    #         ]
-    #     )
+        Returns:
+            TopologyInputKey objects after being set including any server-generated values.
+        """
+        request = TopologyInputConfigSetSomeRequest(
+            values=[
+                TopologyInputConfig(
+                    key=TopologyInputKey(workspace_id=workspace_id, device_id=device_id),
+                    device_info=DeviceInfo(device_id=device_id, hostname=hostname),
+                )
+                for device_id, hostname in device_inputs
+            ]
+        )
 
-    #     client = TopologyInputConfigServiceStub(self._channel)
-    #     topology_input_keys = []
-    #     try:
-    #         responses = client.set_some(request, metadata=self._metadata, timeout=timeout)
-    #         async for response in responses:
-    #             topology_input_keys.append(response.key)
-    #         return topology_input_keys
+        client = TopologyInputConfigServiceStub(self._channel)
+        topology_input_keys = []
+        try:
+            responses = client.set_some(request, metadata=self._metadata, timeout=timeout)
+            async for response in responses:
+                topology_input_keys.append(response.key)
+            return topology_input_keys
 
-    #     except Exception as e:
-    #         raise get_cv_client_exception(e, f"Workspace ID '{workspace_id}', Device IDs '{device_inputs}'") or e
+        except Exception as e:
+            raise get_cv_client_exception(e, f"Workspace ID '{workspace_id}', Device IDs '{device_inputs}'") or e

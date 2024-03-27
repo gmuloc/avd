@@ -120,7 +120,11 @@ async def verify_devices_in_topology_studio(existing_devices: list[CVDevice], wo
 
     existing_device_tuples = set((device.serial_number, device.hostname, device.system_mac_address) for device in existing_devices)
 
-    cv_topology_inputs = await cv_client.get_topology_studio_inputs(
+    #cv_topology_inputs = await cv_client.get_topology_studio_inputs(
+    #    workspace_id=workspace_id,
+    #    device_ids=list({device.serial_number for device in existing_devices}),
+    #)
+    cv_topology_inputs = await cv_client._future_get_topology_studio_inputs(
         workspace_id=workspace_id,
         device_ids=list({device.serial_number for device in existing_devices}),
     )
@@ -143,7 +147,8 @@ async def verify_devices_in_topology_studio(existing_devices: list[CVDevice], wo
 
     if update_topology_inputs:
         LOGGER.info("verify_devices_in_topology_studio: need updates for %s unique devices in I&T Studio.", len(update_topology_inputs))
-        await cv_client.set_topology_studio_inputs(workspace_id=workspace_id, device_inputs=update_topology_inputs)
+        # await cv_client.set_topology_studio_inputs(workspace_id=workspace_id, device_inputs=update_topology_inputs)
+        await cv_client._future_set_topology_studio_inputs(workspace_id=workspace_id, device_inputs=update_topology_inputs)
 
 
 def missing_devices_handler(missing_devices: list[CVDevice], skip_missing_devices: bool, context: str) -> Exception:
