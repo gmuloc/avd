@@ -82,6 +82,8 @@ if HAS_PYAVD:
         },
         "return_details": {"type": "bool", "required": False, "default": False},
     }
+else:
+    ARGUMENT_SPEC = {}
 
 
 class ActionModule(ActionBase):

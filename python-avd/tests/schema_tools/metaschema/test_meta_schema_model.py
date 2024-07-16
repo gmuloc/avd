@@ -8,15 +8,14 @@ from sys import path, version_info
 import pytest
 import yaml
 
-if version_info >= (3, 10):
-    # Override global path to load schema from source instead of any installed version.
-    # Avoids to load from pyavd to avoid relying on pyavd vendor things being generated.
-    path.insert(0, str(Path(__file__).parents[3]))
+# Override global path to load schema from source instead of any installed version.
+# Avoids to load from pyavd to avoid relying on pyavd vendor things being generated.
+path.insert(0, str(Path(__file__).parents[3]))
 
-    from schema_tools.metaschema.meta_schema_model import AristaAvdSchema
-    from schema_tools.store import create_store
+from schema_tools.metaschema.meta_schema_model import AristaAvdSchema
+from schema_tools.store import create_store
 
-    raw_schema = create_store()["eos_designs"]
+raw_schema = create_store()["eos_designs"]
 
 
 class NoAliasDumper(yaml.Dumper):
