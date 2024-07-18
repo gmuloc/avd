@@ -36,6 +36,9 @@
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;action</samp>](## "ip_security.profiles.[].dpd.action") | String | Required |  | Valid Values:<br>- <code>clear</code><br>- <code>hold</code><br>- <code>restart</code> | Action to apply.<br><br>* 'clear': Delete all connections<br>* 'hold': Re-negotiate connection on demand<br>* 'restart': Restart connection immediately<br> |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode</samp>](## "ip_security.profiles.[].mode") | String |  |  | Valid Values:<br>- <code>transport</code><br>- <code>tunnel</code> | Ipsec mode type. |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flow_parallelization_encapsulation_udp</samp>](## "ip_security.profiles.[].flow_parallelization_encapsulation_udp") | Boolean |  |  |  | Enable flow parallelization.<br>When enabled, multiple cores are used to parallelize the IPsec encryption and decryption processing. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;flow_entropy_udp</samp>](## "ip_security.profiles.[].flow_entropy_udp") | Dictionary |  |  |  | Configure source port randomization for UDP.<br>This configuration takes effect only if `flow_parallelization_encapsulation_udp` is enabled.<br>EOS default are source offset 49152, length 65535. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source_offset</samp>](## "ip_security.profiles.[].flow_entropy_udp.source_offset") | Integer |  |  | Min: 1<br>Max: 65535 | Starting UDP port number. |
+    | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;source_length</samp>](## "ip_security.profiles.[].flow_entropy_udp.source_length") | Integer |  |  | Min: 1<br>Max: 65535 |  |
     | [<samp>&nbsp;&nbsp;key_controller</samp>](## "ip_security.key_controller") | Dictionary |  |  |  |  |
     | [<samp>&nbsp;&nbsp;&nbsp;&nbsp;profile</samp>](## "ip_security.key_controller.profile") | String |  |  |  | IPsec profile name to use. |
     | [<samp>&nbsp;&nbsp;hardware_encryption_disabled</samp>](## "ip_security.hardware_encryption_disabled") | Boolean |  | `False` |  | Disable hardware encryption.<br>An SFE restart is needed for this change to take effect. |
@@ -129,6 +132,15 @@
           # Enable flow parallelization.
           # When enabled, multiple cores are used to parallelize the IPsec encryption and decryption processing.
           flow_parallelization_encapsulation_udp: <bool>
+
+          # Configure source port randomization for UDP.
+          # This configuration takes effect only if `flow_parallelization_encapsulation_udp` is enabled.
+          # EOS default are source offset 49152, length 65535.
+          flow_entropy_udp:
+
+            # Starting UDP port number.
+            source_offset: <int; 1-65535>
+            source_length: <int; 1-65535>
       key_controller:
 
         # IPsec profile name to use.

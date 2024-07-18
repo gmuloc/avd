@@ -26322,6 +26322,30 @@
                           "type": "boolean",
                           "description": "Enable flow parallelization.\nWhen enabled, multiple cores are used to parallelize the IPsec encryption and decryption processing.",
                           "title": "Flow Parallelization Encapsulation UDP"
+                        },
+                        "flow_entropy_udp": {
+                          "type": "object",
+                          "description": "Configure source port randomization for UDP.\nThis configuration takes effect only if `flow_parallelization_encapsulation_udp` is enabled.\nEOS default are source offset 49152, length 65535.",
+                          "properties": {
+                            "source_offset": {
+                              "type": "integer",
+                              "description": "Starting UDP port number.",
+                              "minimum": 1,
+                              "maximum": 65535,
+                              "title": "Source Offset"
+                            },
+                            "source_length": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 65535,
+                              "title": "Source Length"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "patternProperties": {
+                            "^_.+$": {}
+                          },
+                          "title": "Flow Entropy UDP"
                         }
                       },
                       "additionalProperties": false,

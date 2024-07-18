@@ -175,6 +175,26 @@ keys:
               description: |-
                 Enable flow parallelization.
                 When enabled, multiple cores are used to parallelize the IPsec encryption and decryption processing.
+            flow_entropy_udp:
+              type: dict
+              description: |-
+                Configure source port randomization for UDP.
+                This configuration takes effect only if `flow_parallelization_encapsulation_udp` is enabled.
+                EOS default are source offset 49152, length 65535.
+              keys:
+                source_offset:
+                  type: int
+                  description: Starting UDP port number.
+                  convert_types:
+                    - str
+                  min: 1
+                  max: 65535
+                source_length:
+                  type: int
+                  convert_types:
+                    - str
+                  min: 1
+                  max: 65535
       key_controller:
         type: dict
         keys:
