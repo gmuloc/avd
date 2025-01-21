@@ -72,3 +72,4 @@ debug/
 /pyavd-utils/build/
 /pyavd-utils/dist/
 /pyavd-utils/pyavd_utils.egg-info/
+/pyavd-utils/pyavd_utils/*.so

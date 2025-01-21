@@ -7,9 +7,9 @@ name = "pyavd-utils"
 version = "0.0.1"
 
 [tool.setuptools.packages.find]
-include = []
+include = ["pyavd_utils"]
 
 [[tool.setuptools-rust.ext-modules]]
-target = "pyavd_utils.passwords"
+target = "pyavd_utils._passwords"
 path = "rust/passwords/Cargo.toml"
 binding = "PyO3"

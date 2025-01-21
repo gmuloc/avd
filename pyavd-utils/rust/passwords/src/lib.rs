@@ -32,6 +32,7 @@ pub fn sha512_crypt(password: String, salt: String) -> String {
 }
 
 #[pymodule]
+#[pyo3(name = "_passwords")]
 fn passwords(m: &Bound<'_, PyModule>) -> pyo3::PyResult<()> {
     m.add_function(wrap_pyfunction!(sha512_crypt, m)?)?;
     Ok(())
