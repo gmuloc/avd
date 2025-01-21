@@ -39,7 +39,32 @@ pyavd-editable-install: ## Build and install PyAVD as editable
 	pip install -e python-avd --config-settings editable_mode=compat --force-reinstall
 
 #########################################
-# Code Validation using ansible-test 	#
+# pyavd-utils actions                   #
+#########################################
+.PHONY: pyavd-utils-build
+pyavd-utils-build: ## Build PyAVD-utils Python package locally.
+	cd pyavd-utils && python -m build
+
+.PHONY: pyavd-utils-test
+pyavd-utils-test: ## Test PyAVD-utils Python code with tox.
+	cd pyavd-utils && tox -r
+
+# TODO: publish
+# .PHONY: pyavd-utils-publish
+# pyavd-utils-publish: ## Build and publish PyAVD-utils Python package.
+#	cd python-avd && $(MAKE) build publish
+
+.PHONY: pyavd-utils-install
+pyavd-utils-install: pyavd-utils-build ## Build and install PyAVD-utils Python package.
+	pip install pyavd-utils/dist/* --force-reinstall
+
+# The editable_mode=compat is required for pylance to pick up the editable install.
+.PHONY: pyavd-utils-editable-install
+pyavd-utils-editable-install: ## Build and install PyAVD-utils as editable
+	pip install -e pyavd-utils --config-settings editable_mode=compat --force-reinstall
+
+#########################################
+# Code Validation using ansible-test  	#
 #########################################
 
 .PHONY: sanity

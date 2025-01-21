@@ -6,6 +6,19 @@ build-backend = "setuptools.build_meta"
 name = "pyavd-utils"
 version = "0.0.1"
 
+# TODO: this need to go outside of pyproject if we use this
+# [bdist_wheel]
+# # Builing the wheel for all python versions above 3.10
+# py_limited_api=cp310
+
+[dependency-groups]
+pytest = [
+    "pytest",
+]
+coverage = [
+    "coverage[toml]",
+]
+
 [tool.setuptools.packages.find]
 include = ["pyavd_utils"]
 

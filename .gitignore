@@ -70,6 +70,7 @@ debug/
 **/*.rs.bk
 # pyavd-utils ignores
 /pyavd-utils/build/
+/pyavd-utils/.coverage
 /pyavd-utils/dist/
 /pyavd-utils/pyavd_utils.egg-info/
 /pyavd-utils/pyavd_utils/*.so

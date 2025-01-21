@@ -26,7 +26,7 @@ repos:
       - id: insert-license
         name: Check and insert license on Python files.
         exclude: ansible_collections/arista/avd/(plugins/module_utils|tests/unit(/module_utils|/modules|))/__init__.py
-        files: .*\.py$
+        files: .*\.pyi?$
         args:
           - --license-filepath
           - development/license-short.txt
