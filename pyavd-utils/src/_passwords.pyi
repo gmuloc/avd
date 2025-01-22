@@ -18,4 +18,3 @@ def sha512_crypt(password: str, salt: str) -> str:
     Returns:
       str: The sha512 crypt value.
     """
-

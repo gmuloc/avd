@@ -1,2 +1,4 @@
+include pyproject.toml
 include rust/passwords/Cargo.toml
 recursive-include rust/passwords/ *.rs
+recursive-include src *

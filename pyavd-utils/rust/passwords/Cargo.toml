@@ -5,8 +5,12 @@ edition = "2021"
 
 [dependencies]
 sha-crypt = { version = "0.5.0", features = ["simple"] }
-pyo3 = { version = "0.23.3", "features" = ["abi3"] }
+# TODO: extenstion-module is required for manylinux compliance as documented
+# https://pyo3.rs/v0.23.3/building-and-distribution#the-extension-module-feature
+# check if this could cause issues in other area.
+pyo3 = { version = "0.23.3", "features" = ["extension-module", "abi3"] }
 
 [lib]
 name = "_passwords"
+crate-type = ["cdylib"]
 # See https://github.com/PyO3/pyo3 for details
