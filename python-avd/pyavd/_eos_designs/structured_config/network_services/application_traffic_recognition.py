@@ -21,7 +21,8 @@ class ApplicationTrafficRecognitionMixin(Protocol):
     """
 
     @cached_property
-    def application_traffic_recognition(self: AvdStructuredConfigNetworkServicesProtocol) -> dict | None:
+    # TODO: removing for now
+    def _application_traffic_recognition(self: AvdStructuredConfigNetworkServicesProtocol) -> dict | None:
         """Return structured config for application_traffic_recognition if wan router."""
         if not self.shared_utils.is_wan_router:
             return None

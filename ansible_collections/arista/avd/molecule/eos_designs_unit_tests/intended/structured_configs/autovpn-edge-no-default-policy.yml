@@ -5,20 +5,6 @@ agents:
   environment_variables:
   - name: KERNELFIB_PROGRAM_ALL_ECMP
     value: '1'
-application_traffic_recognition:
-  field_sets:
-    ipv4_prefixes:
-    - name: PFX-PATHFINDERS
-      prefix_values:
-      - 2.2.2.2/32
-  applications:
-    ipv4_applications:
-    - name: APP-CONTROL-PLANE
-      dest_prefix_set_name: PFX-PATHFINDERS
-  application_profiles:
-  - name: APP-PROFILE-CONTROL-PLANE
-    applications:
-    - name: APP-CONTROL-PLANE
 config_end: true
 dps_interfaces:
 - name: Dps1
@@ -252,23 +238,9 @@ router_path_selection:
       ipv4_addresses:
       - 10.7.7.7
   load_balance_policies:
-  - name: LB-DEFAULT-POLICY-DEFAULT
-    path_groups:
-    - name: INET
   - name: LB-DEFAULT-POLICY-CONTROL-PLANE
     path_groups:
     - name: INET
-  policies:
-  - name: DEFAULT-POLICY
-    default_match:
-      load_balance: LB-DEFAULT-POLICY-DEFAULT
-  - name: DEFAULT-POLICY-WITH-CP
-    default_match:
-      load_balance: LB-DEFAULT-POLICY-DEFAULT
-    rules:
-    - id: 10
-      application_profile: APP-PROFILE-CONTROL-PLANE
-      load_balance: LB-DEFAULT-POLICY-CONTROL-PLANE
   vrfs:
   - name: PROD
     path_selection_policy: DEFAULT-POLICY

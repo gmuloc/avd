@@ -5,68 +5,6 @@ agents:
   environment_variables:
   - name: KERNELFIB_PROGRAM_ALL_ECMP
     value: '1'
-application_traffic_recognition:
-  categories:
-  - name: VIDEO1
-    applications:
-    - name: CUSTOM-APPLICATION-2
-    - name: CUSTOM-DSCP-APPLICATION
-    - name: microsoft-teams
-  field_sets:
-    l4_ports:
-    - name: TCP-SRC-2
-      port_values:
-      - '42'
-    - name: TCP-DEST-2
-      port_values:
-      - '666'
-      - '777'
-    ipv4_prefixes:
-    - name: CUSTOM-SRC-PREFIX-1
-      prefix_values:
-      - 42.42.42.0/24
-    - name: CUSTOM-DEST-PREFIX-1
-      prefix_values:
-      - 6.6.6.0/24
-    - name: PFX-PATHFINDERS
-      prefix_values:
-      - 192.168.144.2/32
-      - 192.168.144.3/32
-  applications:
-    ipv4_applications:
-    - name: CUSTOM-APPLICATION-1
-      src_prefix_set_name: CUSTOM-SRC-PREFIX-1
-      dest_prefix_set_name: CUSTOM-DEST-PREFIX-1
-      protocols:
-      - tcp
-    - name: CUSTOM-APPLICATION-2
-      protocols:
-      - tcp
-      tcp_src_port_set_name: TCP-SRC-2
-      tcp_dest_port_set_name: TCP-DEST-2
-    - name: CUSTOM-DSCP-APPLICATION
-      dscp_ranges:
-      - ef
-      - 12-14
-      - cs6
-      - '42'
-    - name: APP-CONTROL-PLANE
-      dest_prefix_set_name: PFX-PATHFINDERS
-  application_profiles:
-  - name: VIDEO
-    applications:
-    - name: CUSTOM-APPLICATION-1
-    - name: skype
-    application_transports:
-    - rtp
-    categories:
-    - name: VIDEO1
-  - name: VOICE
-    applications:
-    - name: CUSTOM-VOICE-APPLICATION
-  - name: APP-PROFILE-CONTROL-PLANE
-    applications:
-    - name: APP-CONTROL-PLANE
 config_end: true
 dps_interfaces:
 - name: Dps1
@@ -820,9 +758,6 @@ router_adaptive_virtual_topology:
   profiles:
   - name: DEFAULT-AVT-POLICY-CONTROL-PLANE
     load_balance_policy: LB-DEFAULT-AVT-POLICY-CONTROL-PLANE
-  - name: DEFAULT-AVT-POLICY-VIDEO
-    load_balance_policy: LB-DEFAULT-AVT-POLICY-VIDEO
-    internet_exit_policy: DIRECT-EXIT-POLICY-1
   - name: DEFAULT-AVT-POLICY-DEFAULT
     load_balance_policy: LB-DEFAULT-AVT-POLICY-DEFAULT
   - name: PROD-AVT-POLICY-VOICE
@@ -833,6 +768,9 @@ router_adaptive_virtual_topology:
     internet_exit_policy: ZSCALER-EXIT-POLICY-2
   - name: PROD-AVT-POLICY-DEFAULT
     load_balance_policy: LB-PROD-AVT-POLICY-DEFAULT
+  - name: DEFAULT-AVT-POLICY-VIDEO
+    load_balance_policy: LB-DEFAULT-AVT-POLICY-VIDEO
+    internet_exit_policy: DIRECT-EXIT-POLICY-1
   - name: DEFAULT-POLICY-DEFAULT
     load_balance_policy: LB-DEFAULT-POLICY-DEFAULT
   policies:
@@ -1169,14 +1107,17 @@ router_path_selection:
       - 10.9.9.6
   load_balance_policies:
   - name: LB-DEFAULT-AVT-POLICY-CONTROL-PLANE
+    lowest_hop_count: false
     path_groups:
     - name: INET
     - name: Satellite
       priority: 2
   - name: LB-DEFAULT-AVT-POLICY-VIDEO
+    lowest_hop_count: false
     path_groups:
     - name: INET
   - name: LB-DEFAULT-AVT-POLICY-DEFAULT
+    lowest_hop_count: false
     path_groups:
     - name: INET
   - name: LB-PROD-AVT-POLICY-VOICE
@@ -1186,14 +1127,17 @@ router_path_selection:
     - name: INET
       priority: 2
   - name: LB-PROD-AVT-POLICY-VIDEO
+    lowest_hop_count: false
     loss_rate: '42.0'
     path_groups:
     - name: INET
       priority: 2
   - name: LB-PROD-AVT-POLICY-DEFAULT
+    lowest_hop_count: false
     path_groups:
     - name: INET
   - name: LB-DEFAULT-POLICY-DEFAULT
+    lowest_hop_count: false
     path_groups:
     - name: AWS
     - name: INET

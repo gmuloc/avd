@@ -64,17 +64,18 @@ class StaticRoutesMixin(Protocol):
                         if static_route not in static_routes:
                             static_routes.append(static_route)
 
-        for _internet_exit_policy, connections in self._filtered_internet_exit_policies_and_connections:
-            for connection in connections:
-                if connection["type"] == "tunnel":
-                    static_route = {
-                        "destination_address_prefix": f"{connection['tunnel_destination_ip']}/32",
-                        "name": f"IE-ZSCALER-{connection['suffix']}",
-                        "gateway": connection["next_hop"],
-                    }
-                    # Ignore duplicate items in case of multiple connections generating the same route
-                    if static_route not in static_routes:
-                        static_routes.append(static_route)
+        # TODO: Moved
+        # for _internet_exit_policy, connections in self._filtered_internet_exit_policies_and_connections:
+        #    for connection in connections:
+        #        if connection["type"] == "tunnel":
+        #            static_route = {
+        #                "destination_address_prefix": f"{connection['tunnel_destination_ip']}/32",
+        #                "name": f"IE-ZSCALER-{connection['suffix']}",
+        #                "gateway": connection["next_hop"],
+        #            }
+        #            # Ignore duplicate items in case of multiple connections generating the same route
+        #            if static_route not in static_routes:
+        #                static_routes.append(static_route)
 
         if static_routes:
             return static_routes

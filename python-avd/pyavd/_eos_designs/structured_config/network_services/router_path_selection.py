@@ -3,10 +3,9 @@
 # that can be found in the LICENSE file.
 from __future__ import annotations
 
-from functools import cached_property
 from typing import TYPE_CHECKING, Protocol
 
-from pyavd._utils import append_if_not_duplicate, get, strip_empties_from_dict
+from pyavd._eos_designs.structured_config.structured_config_generator import structured_config_contributor
 
 if TYPE_CHECKING:
     from . import AvdStructuredConfigNetworkServicesProtocol
@@ -19,70 +18,14 @@ class RouterPathSelectionMixin(Protocol):
     Class should only be used as Mixin to a AvdStructuredConfig class.
     """
 
-    @cached_property
-    def router_path_selection(self: AvdStructuredConfigNetworkServicesProtocol) -> dict | None:
-        """Return structured config for router path-selection (DPS)."""
-        if not self.shared_utils.is_wan_router:
-            return None
+    @structured_config_contributor
+    def router_path_selection_vrfs(self: AvdStructuredConfigNetworkServicesProtocol) -> None:
+        """Add structured config for router path-selection (DPS) VRFs for AutoVPN usecase."""
+        if not self.shared_utils.is_wan_router or self.inputs.wan_mode != "autovpn":
+            return
 
-        router_path_selection = {
-            "load_balance_policies": self._wan_load_balance_policies(),
-        }
-
-        # When running CV Pathfinder, only load balance policies are configured
-        # for AutoVPN, need also vrfs and policies.
-        if self.inputs.wan_mode == "autovpn":
-            vrfs = [
-                {"name": vrf.name, "path_selection_policy": f"{vrf.policy}-WITH-CP" if vrf.name == "default" else vrf.policy} for vrf in self._filtered_wan_vrfs
-            ]
-
-            router_path_selection.update(
-                {
-                    "policies": self._autovpn_policies(),
-                    "vrfs": vrfs,
-                },
+        for vrf in self._filtered_wan_vrfs:
+            self.structured_config.router_path_selection.vrfs.append_new(
+                name=vrf.name,
+                path_selection_policy=f"{vrf.policy}-WITH-CP" if vrf.name == "default" else vrf.policy,
             )
-
-        return strip_empties_from_dict(router_path_selection)
-
-    def _wan_load_balance_policies(self: AvdStructuredConfigNetworkServicesProtocol) -> list:
-        """Return a list of load balance policies."""
-        load_balance_policies = []
-        for policy in self._filtered_wan_policies:
-            for match in policy.get("matches", []):
-                append_if_not_duplicate(
-                    list_of_dicts=load_balance_policies,
-                    primary_key="name",
-                    new_dict=match["load_balance_policy"],
-                    context="Router Path-Selection load-balance policies.",
-                    context_keys=["name"],
-                )
-            if (default_match := policy.get("default_match")) is not None:
-                append_if_not_duplicate(
-                    list_of_dicts=load_balance_policies,
-                    primary_key="name",
-                    new_dict=default_match["load_balance_policy"],
-                    context="Router Path-Selection load-balance policies.",
-                    context_keys=["name"],
-                )
-
-        return load_balance_policies
-
-    def _autovpn_policies(self: AvdStructuredConfigNetworkServicesProtocol) -> list:
-        """Return a list of policies for AutoVPN."""
-        policies = []
-        for policy in self._filtered_wan_policies:
-            autovpn_policy = {"name": policy["name"], "rules": []}
-            for index, match in enumerate(get(policy, "matches", default=[]), start=1):
-                autovpn_policy["rules"].append(
-                    {
-                        "id": 10 * index,
-                        "application_profile": match["application_profile"],
-                        "load_balance": match["load_balance_policy"]["name"],
-                    },
-                )
-            if (default_match := policy.get("default_match")) is not None:
-                autovpn_policy["default_match"] = {"load_balance": default_match["load_balance_policy"]["name"]}
-
-            policies.append(strip_empties_from_dict(autovpn_policy))
-        return policies

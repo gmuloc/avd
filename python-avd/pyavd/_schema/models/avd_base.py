@@ -34,6 +34,10 @@ class AvdBase(ABC):
     _block_inheritance: bool = False
     """Flag to block inheriting further if we at some point inherited from a class with _created_from_null set."""
 
+    @abstractmethod
+    def _compare(self, other: Self, ignore_fields: tuple[str, ...] = ()) -> bool:
+        """Compare two instances. Optionally ignoring fields for the outermost AvdModel."""
+
     def _deepcopy(self) -> Self:
         """Return a copy including all nested models."""
         return deepcopy(self)

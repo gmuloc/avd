@@ -268,17 +268,17 @@ class EthernetInterfacesMixin(Protocol):
                 for interface_name in natural_sort(subif_parent_interface_names)
             )
 
-        ethernet_interfaces.extend(
-            {
-                "name": connection["source_interface"],
-                "ip_nat": {
-                    "service_profile": self.get_internet_exit_nat_profile_name(internet_exit_policy.type),
-                },
-            }
-            for internet_exit_policy, connections in self._filtered_internet_exit_policies_and_connections
-            for connection in connections
-            if connection["type"] == "ethernet"
-        )
+        # ethernet_interfaces.extend(
+        #    {
+        #        "name": connection["source_interface"],
+        #        "ip_nat": {
+        #            "service_profile": self.get_internet_exit_nat_profile_name(internet_exit_policy.type),
+        #        },
+        #    }
+        #    for internet_exit_policy, connections in self._filtered_internet_exit_policies_and_connections
+        #    for connection in connections
+        #    if connection["type"] == "ethernet"
+        # )
 
         if ethernet_interfaces:
             return ethernet_interfaces
