@@ -26,4 +26,8 @@ intends to clarify why the words are ignored and if any action is pending
 - pathc
     Used as test data
 - crate
-    Name of package for rust
+    Name of package for Rust 🦀
+- ect
+    Valid value for class_maps.qos.[].ecn in eos_cli_config_gen
+- TE
+    Traffic Engineering
