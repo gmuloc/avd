@@ -5,6 +5,8 @@
 # For now we allow docstrings in stubs
 # ruff: noqa: PYI021
 
+__all__ = ["sha512_crypt"]
+
 def sha512_crypt(password: str, salt: str) -> str:
     """
     Computes the SHA512 crypt value for the password given the salt.

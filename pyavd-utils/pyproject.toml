@@ -15,7 +15,7 @@ coverage = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["src"]
+include = ["pyavd_utils"]
 
 [[tool.setuptools-rust.ext-modules]]
 target = "pyavd_utils._passwords"
