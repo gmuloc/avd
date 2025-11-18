@@ -449,8 +449,8 @@ interface Dps1
 
 ##### IPv4
 
-| Interface | Description | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
-| --------- | ----------- | ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
+| --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
 | Ethernet1 | P2P_site1-border1_Ethernet3 | - | 10.0.1.9/31 | default | 9194 | False | - | - |
 | Ethernet1.100 | P2P_site1-border1_Ethernet3.100_VRF_BLUE | - | 10.0.1.9/31 | BLUE | 9194 | False | - | - |
 | Ethernet1.101 | P2P_site1-border1_Ethernet3.101_VRF_RED | - | 10.0.1.9/31 | RED | 9194 | False | - | - |
@@ -1452,8 +1452,8 @@ application traffic recognition
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet1 | - |  |
-| Ethernet2 | - |  |
+| Ethernet1 | - | - |
+| Ethernet2 | - | - |
 
 ###### Static Peers
 

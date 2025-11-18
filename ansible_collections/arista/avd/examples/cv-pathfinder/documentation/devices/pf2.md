@@ -414,8 +414,8 @@ interface Dps1
 
 ##### IPv4
 
-| Interface | Description | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
-| --------- | ----------- | ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
+| --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
 | Ethernet1 | ACME-MPLS-INC_mpls-pf2_mpls-cloud_Ethernet2 | - | 172.18.200.2/24 | default | - | False | - | - |
 | Ethernet2 | GLOBAL-INTERNET-LIMITED_inet-pf2_inet-cloud_Ethernet2 | - | 100.64.200.2/24 | default | - | False | ACL-PF-INTERNET-IN_Ethernet2 | - |
 
@@ -1177,7 +1177,7 @@ application traffic recognition
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet2 | - |  |
+| Ethernet2 | - | - |
 
 ###### Static Peers
 
@@ -1203,7 +1203,7 @@ application traffic recognition
 
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
-| Ethernet1 | - |  |
+| Ethernet1 | - | - |
 
 ###### Static Peers
 

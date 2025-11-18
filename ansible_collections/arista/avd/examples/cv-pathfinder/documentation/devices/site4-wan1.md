@@ -434,8 +434,8 @@ interface Dps1
 
 ##### IPv4
 
-| Interface | Description | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
-| --------- | ----------- | ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
+| --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
 | Ethernet1 | P2P_site4-border1_Ethernet3 | - | 10.0.4.57/31 | default | 9194 | False | - | - |
 | Ethernet2 | P2P_site4-border2_Ethernet3 | - | 10.0.4.59/31 | default | 9194 | False | - | - |
 | Ethernet3 | ACME-MPLS-INC_mpls-site4-wan1_mpls-cloud_Ethernet8 | - | 172.18.40.2/24 | default | - | False | - | - |

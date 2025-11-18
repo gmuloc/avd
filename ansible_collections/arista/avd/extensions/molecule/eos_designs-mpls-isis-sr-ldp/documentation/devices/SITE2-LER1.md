@@ -132,7 +132,7 @@ spanning-tree mst 0 priority 4096
 ### Internal VLAN Allocation Policy Summary
 
 | Policy Allocation | Range Beginning | Range Ending |
-| ------------------| --------------- | ------------ |
+| ----------------- | --------------- | ------------ |
 | ascending | 1006 | 1199 |
 
 ### Internal VLAN Allocation Policy Device Configuration
@@ -197,8 +197,8 @@ vlan 2020
 
 ##### IPv4
 
-| Interface | Description | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
-| --------- | ----------- | ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
+| --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
 | Ethernet1 | P2P_SITE2-LSR1_Ethernet1 | - | 100.64.48.15/31 | default | 9178 | False | - | - |
 | Ethernet6 | TENANT_B_SITE_5_WAN_TEST | - | 123.10.10.2/31 | TENANT_B_WAN | - | False | - | - |
 | Ethernet6.10 | TENANT_B_SITE_5_INTRA_L3VPN | - | 123.1.1.2/31 | TENANT_B_INTRA | - | False | - | - |
@@ -361,7 +361,7 @@ interface Ethernet14
 ##### L2
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
-| --------- | ----------- | ---- | ----- | ----------- | ------------| --------------------- | ------------------ | ------- | -------- |
+| --------- | ----------- | ---- | ----- | ----------- | ----------- | --------------------- | ------------------ | ------- | -------- |
 
 ##### Flexible Encapsulation Interfaces
 
@@ -510,15 +510,15 @@ interface Loopback0
 
 #### VLAN Interfaces Summary
 
-| Interface | Description | VRF |  MTU | Shutdown |
-| --------- | ----------- | --- | ---- | -------- |
+| Interface | Description | VRF | MTU | Shutdown |
+| --------- | ----------- | --- | --- | -------- |
 | Vlan2020 | TENANT_B_INSIDE_FW | TENANT_B_INTRA | - | False |
 
 ##### IPv4
 
 | Interface | VRF | IP Address | IP Address Virtual | IP Router Virtual Address | ACL In | ACL Out |
 | --------- | --- | ---------- | ------------------ | ------------------------- | ------ | ------- |
-| Vlan2020 |  TENANT_B_INTRA  |  -  |  -  |  -  |  -  |  -  |
+| Vlan2020 | TENANT_B_INTRA | - | - | - | - | - |
 
 #### VLAN Interfaces Device Configuration
 

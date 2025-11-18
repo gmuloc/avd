@@ -442,8 +442,8 @@ interface Dps1
 
 ##### IPv4
 
-| Interface | Description | Channel Group | IP Address | VRF |  MTU | Shutdown | ACL In | ACL Out |
-| --------- | ----------- | ------------- | ---------- | ----| ---- | -------- | ------ | ------- |
+| Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
+| --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
 | Ethernet1.42 | RED-TEST | - | 10.42.3.1/24 | RED | - | False | - | - |
 | Ethernet1.666 | BLUE-TEST | - | 10.66.3.1/24 | BLUE | - | False | - | - |
 | Ethernet4 | inet-cloud_Ethernet8 | 4 | *dhcp | *default | *- | *False | *ACL-INTERNET-IN_Port-Channel4 | *- |
@@ -495,7 +495,7 @@ interface Ethernet5
 ##### L2
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
-| --------- | ----------- | ---- | ----- | ----------- | ------------| --------------------- | ------------------ | ------- | -------- |
+| --------- | ----------- | ---- | ----- | ----------- | ----------- | --------------------- | ------------------ | ------- | -------- |
 
 ##### IPv4
 

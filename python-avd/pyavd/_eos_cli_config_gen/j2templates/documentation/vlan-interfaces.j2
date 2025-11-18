@@ -10,8 +10,8 @@
 
 #### VLAN Interfaces Summary
 
-| Interface | Description | VRF |  MTU | Shutdown |
-| --------- | ----------- | --- | ---- | -------- |
+| Interface | Description | VRF | MTU | Shutdown |
+| --------- | ----------- | --- | --- | -------- |
 {%     for vlan_interface in vlan_interfaces | arista.avd.natural_sort('name') %}
 {%         set description = vlan_interface.description | arista.avd.default('-') %}
 {%         set vrf = vlan_interface.vrf | arista.avd.default('default') %}
@@ -52,7 +52,7 @@
 {%         set row_varp = vlan_interface.ip_virtual_router_addresses | arista.avd.default('-') | join(", ") %}
 {%         set row_acl_in = vlan_interface.access_group_in | arista.avd.default('-') %}
 {%         set row_acl_out = vlan_interface.access_group_out | arista.avd.default('-') %}
-| {{ vlan_interface.name }} |  {{ row_vrf }}  |  {{ row_ip_addr }}  |  {{ row_ip_vaddr }}  |  {{ row_varp }}  |  {{ row_acl_in }}  |  {{ row_acl_out }}  |
+| {{ vlan_interface.name }} | {{ row_vrf }} | {{ row_ip_addr }} | {{ row_ip_vaddr }} | {{ row_varp }} | {{ row_acl_in }} | {{ row_acl_out }} |
 {%     endfor %}
 {# IP NAT Documentation #}
 {%     set ip_nat_interfaces = vlan_interfaces %}

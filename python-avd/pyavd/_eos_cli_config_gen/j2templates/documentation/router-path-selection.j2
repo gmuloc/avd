@@ -77,7 +77,7 @@
 | Interface name | Public address | STUN server profile(s) |
 | -------------- | -------------- | ---------------------- |
 {%                 for local_interface in path_group.local_interfaces | arista.avd.natural_sort('name') %}
-| {{ local_interface.name }} | {{ local_interface.public_address | arista.avd.default("-") }} | {{ local_interface.stun.server_profiles | arista.avd.default([]) | join("<br>") }} |
+| {{ local_interface.name }} | {{ local_interface.public_address | arista.avd.default("-") }} | {{ local_interface.stun.server_profiles | arista.avd.default(["-"]) | join("<br>") }} |
 {%                 endfor %}
 {%             endif %}
 {%             if path_group.local_ips is arista.avd.defined %}
@@ -87,7 +87,7 @@
 | IP address | Public address | STUN server profile(s) |
 | ---------- | -------------- | ---------------------- |
 {%                 for local_ip in path_group.local_ips | arista.avd.natural_sort('ip_address') %}
-| {{ local_ip.ip_address }} | {{ local_ip.public_address | arista.avd.default("-") }} | {{ local_ip.stun.server_profiles | arista.avd.default([]) | join("<br>") }} |
+| {{ local_ip.ip_address }} | {{ local_ip.public_address | arista.avd.default("-") }} | {{ local_ip.stun.server_profiles | arista.avd.default(["-"]) | join("<br>") }} |
 {%                 endfor %}
 {%             endif %}
 {%             if path_group.dynamic_peers.enabled is arista.avd.defined(true) %}
