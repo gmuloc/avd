@@ -107,6 +107,11 @@ class RouterBgpMixin(Protocol):
             peer_group_config = peer_group._cast_as(EosCliConfigGen.RouterBgp.PeerGroupsItem, ignore_extra_keys=True)
             # encrypt password if needed
             peer_group_config.password = self.shared_utils.get_bgp_password(peer_group)
+
+            if peer_group_config.bfd and peer_group_config.ebgp_multihop and not peer_group_config.bfd_timers:
+                # Render global BFD timers if any
+                self.set_global_router_bfd_timers()
+
             self.structured_config.router_bgp.peer_groups.append(peer_group_config)
 
             if peer_group.address_family_ipv4:

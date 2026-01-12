@@ -1,3 +1,4 @@
+---
 # Copyright (c) 2023-2026 Arista Networks, Inc.
 # Use of this source code is governed by the Apache License 2.0
 # that can be found in the LICENSE file.
@@ -10,8 +11,16 @@ keys:
     documentation_options:
       table: bfd-settings
     type: dict
-    description: BFD Multihop tuning.
+    description: |-
+      BFD Multihop tuning.
+      Rendered if:
+      - used in the overlay
+      - any VRF ... TODO
+      - forced using `always_configured: true`
     keys:
+      always_configured:
+        type: bool
+        description: Force the configuration of the global BFD timers.
       interval:
         type: int
         convert_types:

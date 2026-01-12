@@ -9,7 +9,7 @@ from pyavd._eos_designs.structured_config.structured_config_generator import Str
 
 from .ethernet_interfaces import EthernetInterfacesMixin
 from .port_channel_interfaces import PortChannelInterfacesMixin
-from .router_bgp import RouterBgpMixin
+from .router_bgp import RouterBfdMixin, RouterBgpMixin
 from .router_ospf import RouterOspfMixin
 from .utils import UtilsMixin
 
@@ -22,6 +22,7 @@ DATA_MODELS: list[Literal["core_interfaces", "l3_edge"]] = ["core_interfaces", "
 class AvdStructuredConfigCoreInterfacesAndL3EdgeProtocol(
     EthernetInterfacesMixin,
     PortChannelInterfacesMixin,
+    RouterBfdMixin,
     RouterBgpMixin,
     RouterOspfMixin,
     UtilsMixin,

@@ -796,6 +796,12 @@ class AvdStructuredConfigBaseProtocol(
         if self.shared_utils.platform_settings.structured_config:
             self.custom_structured_configs.root.append(self.shared_utils.platform_settings.structured_config)
 
+    @structured_config_contributor
+    def router_bfd(self) -> None:
+        """Set structured config for router_bfd."""
+        if self.inputs.bfd_multihop.always_configured:
+            self.structured_config.router_bfd.multihop = self.inputs.bfd_multihop._cast_as(EosCliConfigGen.RouterBfd.Multihop, ignore_extra_keys=True)
+
     @cached_property
     def _act_ensure_eapi_access(self) -> bool:
         """Flag indicating if we are in ACT Digital Twin mode and if eAPI access in default VRF is enforced."""

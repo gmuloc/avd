@@ -63,6 +63,10 @@ class RouterBgpMixin(Protocol):
                 else None,
             )
 
+            if p2p_link.bfd:
+                # TODO: Maybe need to be able to detect multihop for this...
+                self.set_global_router_bfd_timers()
+
             # For the combination of underlay-routing, rfc5549 and ebgp we will add the neighbor using the regular logic above,
             # but since it is also included in the underlay peer group which is configured for rfc5549,
             # we need to override the nexthop behavior for this neighbor.

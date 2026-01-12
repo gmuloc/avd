@@ -23,6 +23,7 @@ from .port_channel_interfaces import PortChannelInterfacesMixin
 from .prefix_lists import PrefixListsMixin
 from .route_maps import RouteMapsMixin
 from .router_adaptive_virtual_topology import RouterAdaptiveVirtualTopologyMixin
+from .router_bfd import RouterBfdMixin
 from .router_bgp import RouterBgpMixin
 from .router_internet_exit import RouterInternetExitMixin
 from .router_isis import RouterIsisMixin
@@ -61,6 +62,7 @@ class AvdStructuredConfigNetworkServicesProtocol(
     PortChannelInterfacesMixin,
     LoopbackInterfacesMixin,
     RouterBgpMixin,
+    RouterBfdMixin,
     RouteMapsMixin,
     Ipv6StaticRoutesMixin,
     StaticRoutesMixin,

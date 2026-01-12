@@ -797,7 +797,9 @@ class EosDesigns(EosDesignsRootModel):
     class BfdMultihop(AvdModel):
         """Subclass of AvdModel."""
 
-        _fields: ClassVar[dict] = {"interval": {"type": int}, "min_rx": {"type": int}, "multiplier": {"type": int}}
+        _fields: ClassVar[dict] = {"always_configured": {"type": bool}, "interval": {"type": int}, "min_rx": {"type": int}, "multiplier": {"type": int}}
+        always_configured: bool | None
+        """Force the configuration of the global BFD timers."""
         interval: int
         min_rx: int
         multiplier: int
@@ -805,7 +807,12 @@ class EosDesigns(EosDesignsRootModel):
         if TYPE_CHECKING:
 
             def __init__(
-                self, *, interval: int | UndefinedType = Undefined, min_rx: int | UndefinedType = Undefined, multiplier: int | UndefinedType = Undefined
+                self,
+                *,
+                always_configured: bool | None | UndefinedType = Undefined,
+                interval: int | UndefinedType = Undefined,
+                min_rx: int | UndefinedType = Undefined,
+                multiplier: int | UndefinedType = Undefined,
             ) -> None:
                 """
                 BfdMultihop.
@@ -814,6 +821,7 @@ class EosDesigns(EosDesignsRootModel):
                 Subclass of AvdModel.
 
                 Args:
+                    always_configured: Force the configuration of the global BFD timers.
                     interval: interval
                     min_rx: min_rx
                     multiplier: multiplier
@@ -87835,6 +87843,11 @@ class EosDesigns(EosDesignsRootModel):
     bfd_multihop: BfdMultihop
     """
     BFD Multihop tuning.
+    Rendered if:
+    - used in the overlay
+    - any VRF ... TODO
+    - forced using
+    `always_configured: true`
 
     Subclass of AvdModel.
 
@@ -89987,6 +90000,11 @@ class EosDesigns(EosDesignsRootModel):
                    variables.
                 bfd_multihop:
                    BFD Multihop tuning.
+                   Rendered if:
+                   - used in the overlay
+                   - any VRF ... TODO
+                   - forced using
+                   `always_configured: true`
 
                    Subclass of AvdModel.
                 bgp_as:

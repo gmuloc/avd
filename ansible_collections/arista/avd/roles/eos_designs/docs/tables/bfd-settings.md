@@ -7,7 +7,8 @@
 
     | Variable | Type | Required | Default | Value Restrictions | Description |
     | -------- | ---- | -------- | ------- | ------------------ | ----------- |
-    | [<samp>bfd_multihop</samp>](## "bfd_multihop") | Dictionary |  | See (+) on YAML tab |  | BFD Multihop tuning. |
+    | [<samp>bfd_multihop</samp>](## "bfd_multihop") | Dictionary |  | See (+) on YAML tab |  | BFD Multihop tuning.<br>Rendered if:<br>- used in the overlay<br>- any VRF ... TODO<br>- forced using `always_configured: true` |
+    | [<samp>&nbsp;&nbsp;always_configured</samp>](## "bfd_multihop.always_configured") | Boolean |  |  |  | Force the configuration of the global BFD timers. |
     | [<samp>&nbsp;&nbsp;interval</samp>](## "bfd_multihop.interval") | Integer | Required |  | Min: 50<br>Max: 60000 |  |
     | [<samp>&nbsp;&nbsp;min_rx</samp>](## "bfd_multihop.min_rx") | Integer | Required |  | Min: 50<br>Max: 60000 |  |
     | [<samp>&nbsp;&nbsp;multiplier</samp>](## "bfd_multihop.multiplier") | Integer | Required |  | Min: 3<br>Max: 50 |  |
@@ -16,7 +17,14 @@
 
     ```yaml
     # BFD Multihop tuning.
+    # Rendered if:
+    # - used in the overlay
+    # - any VRF ... TODO
+    # - forced using `always_configured: true`
     bfd_multihop: # (1)!
+
+      # Force the configuration of the global BFD timers.
+      always_configured: <bool>
       interval: <int; 50-60000; required>
       min_rx: <int; 50-60000; required>
       multiplier: <int; 3-50; required>

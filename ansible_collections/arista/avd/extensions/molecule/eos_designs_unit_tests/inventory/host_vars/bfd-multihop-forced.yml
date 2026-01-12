@@ -1,0 +1,13 @@
+---
+type: l2leaf
+
+l2leaf:
+  nodes:
+    - name: bfd-multihop-forced
+      id: 1
+
+bfd_multihop:
+  always_configured: true
+  interval: 666
+  min_rx: 123
+  multiplier: 42
