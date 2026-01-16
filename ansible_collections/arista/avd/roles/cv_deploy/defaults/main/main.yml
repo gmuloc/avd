@@ -26,7 +26,7 @@ proxy_port: 8080
 # Deploy device configs and tags for these devices.
 # Defaults to all hosts in the play.
 # This means the role must be imported/included in a play targeting only the relevant EOS devices - *not* CloudVision.
-cv_devices: "{{ ansible_play_hosts }}"
+cv_devices: "{{ ansible_play_batch }}"
 
 # If false, the deployment will fail if any devices are missing (excempting devices where 'is_deployed' is set to false).
 cv_skip_missing_devices: false

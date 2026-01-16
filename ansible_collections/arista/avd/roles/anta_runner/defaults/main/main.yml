@@ -4,7 +4,7 @@
 # Run ANTA for these devices.
 # Defaults to all hosts in the play.
 # This means the role must be imported/included in a play targeting only the relevant EOS devices - *not* CloudVision.
-anta_devices: "{{ ansible_play_hosts }}"
+anta_devices: "{{ ansible_play_batch }}"
 
 # Enable AVD catalogs generation.
 avd_catalogs_enabled: true
