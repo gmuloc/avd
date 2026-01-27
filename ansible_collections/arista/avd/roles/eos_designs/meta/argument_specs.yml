@@ -1,0 +1,228 @@
+---
+# Copyright (c) 2023-2026 Arista Networks, Inc.
+# Use of this source code is governed by the Apache License 2.0
+# that can be found in the LICENSE file.
+
+argument_specs:
+  main:
+    short_description: Generate structured configurations for Arista EOS devices
+    description:
+      - The C(eos_designs) role provides an abstracted data model to deploy various network designs and use cases.
+      - It generates structured configurations, fabric documentation, and optionally Digital Twin artifacts.
+      - The role validates inputs, generates device facts, creates structured configurations, and produces documentation.
+    version_added: "1.0.0"
+    author:
+      - Arista Ansible Team (@aristanetworks)
+    options:
+      avd_verify_requirements:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Verify that the required Python packages are installed.
+          - If set to V(false), the requirements verification task will be skipped.
+
+      avd_ignore_requirements:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Ignore missing Python requirements.
+          - If set to V(true), the role will continue even if required packages are missing.
+          - This should only be used for testing purposes.
+
+      avd_create_directories:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Create output directories if they do not exist.
+          - If set to V(false), the role will not create the structured_dir and fabric_dir directories.
+
+      avd_eos_designs_validate_inputs_batch_size:
+        type: int
+        required: false
+        default: 10
+        description:
+          - The number of hosts to process in each batch when validating inputs.
+          - Depending on your inventory size and the available resources, you may want to adjust this number.
+
+      avd_digital_twin_mode:
+        type: bool
+        required: false
+        default: false
+        description:
+          - "PREVIEW: This option is marked as preview, meaning the data models or generated configuration can change at any time."
+          - Enable generation of the Digital Twin version of the fabric (Digital Twin topology, adjusted configuration, etc.).
+          - By default, Digital Twin artifacts (such as the topology file, adjusted structured and EOS configuration, device and fabric documentation) will replace original fabric artifacts.
+          - To keep Digital Twin artifacts separate, adjust the O(output_dir_name) and O(documentation_dir_name) variables for both C(eos_designs) and C(eos_cli_config_gen) to point to a dedicated output location.
+
+      avd_eos_designs_structured_config:
+        type: bool
+        required: false
+        default: true
+        description:
+          - Generate structured configuration per device.
+          - If set to V(false), the role will not generate structured configuration files.
+
+      avd_eos_designs_return_structured_config:
+        type: bool
+        required: false
+        default: false
+        description:
+          - Return structured configuration as ansible_facts per device.
+          - If set to V(true), the structured configuration will be available as a fact for use in subsequent tasks.
+
+      avd_structured_config_file_format:
+        type: str
+        required: false
+        default: "yml"
+        choices:
+          - "yml"
+          - "yaml"
+          - "json"
+        description:
+          - The file format to use when dumping structured configuration files.
+
+      eos_designs_custom_templates:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description:
+          - List of custom templates to apply to the structured configuration.
+          - Each template can have options to control merge behavior.
+        options:
+          template:
+            type: str
+            required: true
+            description:
+              - Template file path.
+              - The template will be rendered and merged into the structured configuration.
+
+          options:
+            type: dict
+            required: false
+            description:
+              - Template options to control merge behavior.
+            options:
+              list_merge:
+                type: str
+                required: false
+                default: "append_rp"
+                description:
+                  - Merge strategy for lists.
+
+              strip_empty_keys:
+                type: bool
+                required: false
+                default: true
+                description:
+                  - Filter out keys from the generated output if value is null/none/undefined.
+
+      eos_designs_documentation:
+        type: dict
+        required: false
+        description:
+          - Control fabric documentation generation.
+        options:
+          enable:
+            type: bool
+            required: false
+            default: true
+            description:
+              - Generate fabric-wide documentation.
+
+          connected_endpoints:
+            type: bool
+            required: false
+            default: false
+            description:
+              - Include connected endpoints in the fabric-wide documentation.
+              - This is V(false) by default to avoid cluttering documentation for projects with thousands of endpoints.
+
+          topology_csv:
+            type: bool
+            required: false
+            default: false
+            description:
+              - Generate Topology CSV with all interfaces towards other devices.
+
+          p2p_links_csv:
+            type: bool
+            required: false
+            default: false
+            description:
+              - Generate P2P links CSV with all routed point-to-point links between devices.
+
+          toc:
+            type: bool
+            required: false
+            default: true
+            description:
+              - Generate the table of content (TOC) on fabric documentation.
+
+      root_dir:
+        type: path
+        required: false
+        default: "{{ inventory_dir }}"
+        description:
+          - Root directory where to build output structure.
+          - This is the base directory for all generated files.
+
+      documentation_dir_name:
+        type: str
+        required: false
+        default: "documentation"
+        description:
+          - Name of the main documentation folder.
+
+      documentation_dir:
+        type: path
+        required: false
+        default: "{{ root_dir }}/{{ documentation_dir_name }}"
+        description:
+          - Main documentation folder path.
+
+      fabric_dir_name:
+        type: str
+        required: false
+        default: "fabric"
+        description:
+          - Name of the fabric documentation folder.
+
+      fabric_dir:
+        type: path
+        required: false
+        default: "{{ documentation_dir }}/{{ fabric_dir_name }}"
+        description:
+          - Fabric documentation folder path.
+
+      output_dir_name:
+        type: str
+        required: false
+        default: "intended"
+        description:
+          - Name of the main output directory.
+
+      output_dir:
+        type: path
+        required: false
+        default: "{{ root_dir }}/{{ output_dir_name }}"
+        description:
+          - Main output directory path.
+
+      structured_dir_name:
+        type: str
+        required: false
+        default: "structured_configs"
+        description:
+          - Name of the structured YAML files directory.
+
+      structured_dir:
+        type: path
+        required: false
+        default: "{{ output_dir }}/{{ structured_dir_name }}"
+        description:
+          - Output directory for structured YAML files.
+
