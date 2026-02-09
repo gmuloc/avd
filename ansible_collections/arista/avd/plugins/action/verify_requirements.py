@@ -35,6 +35,7 @@ LOGGER = getLogger("ansible_collections.arista.avd")
 DISPLAY = Display()
 
 MIN_PYTHON_SUPPORTED_VERSION = (3, 10)
+MAX_PYTHON_SUPPORTED_VERSION = (3, 13)  # Cap at 3.13 until 3.14 is validated
 DEPRECATE_MIN_PYTHON_SUPPORTED_VERSION = False
 
 
@@ -43,7 +44,8 @@ def _validate_python_version(info: dict[str, Any]) -> bool:
     """
     Validate the running Python version.
 
-    TODO: - avoid hardcoding the min supported version.
+    Checks both minimum and maximum supported Python versions to prevent
+    users from running untested Python versions.
 
     Args:
       info (dict): Dictionary to store information to present in ansible logs
@@ -62,9 +64,34 @@ def _validate_python_version(info: dict[str, Any]) -> bool:
 
     running_version = ".".join(str(v) for v in sys.version_info[:3])
     min_version = ".".join(str(v) for v in MIN_PYTHON_SUPPORTED_VERSION)
+    max_version = ".".join(str(v) for v in MAX_PYTHON_SUPPORTED_VERSION)
+
+    # Check minimum version
     if sys.version_info < MIN_PYTHON_SUPPORTED_VERSION:
-        LOGGER.error("Python Version running %s - Minimum Version required is %s", running_version, min_version)
+        LOGGER.error(
+            "Python version running %s - Minimum version required is %s\n"
+            "  To fix: Install Python %s or higher (up to %s)",
+            running_version,
+            min_version,
+            min_version,
+            max_version,
+        )
         return False
+
+    # Check maximum version
+    if sys.version_info[:2] > MAX_PYTHON_SUPPORTED_VERSION:
+        LOGGER.error(
+            "Python version running %s - Maximum tested version is %s\n"
+            "  Your Python version has not been validated with this AVD release.\n"
+            "  To fix: Use Python %s to %s\n"
+            "  Note: If you want to proceed anyway, set 'avd_ignore_requirements=True'",
+            running_version,
+            max_version,
+            min_version,
+            max_version,
+        )
+        return False
+
     # Keeping this for next deprecation adjust the message as required
     if DEPRECATE_MIN_PYTHON_SUPPORTED_VERSION and sys.version_info[:2] == MIN_PYTHON_SUPPORTED_VERSION:
         msg = (
@@ -239,6 +266,9 @@ def _validate_ansible_version(collection_name: str, running_version: str, info: 
     """
     Validate ansible version in use, running_version, based on the collection requirements.
 
+    Checks both minimum and maximum supported ansible-core versions to prevent
+    users from running untested ansible-core versions.
+
     Args:
       collection_name (str): The collection name
       running_version (str): A string representing the current Ansible version being run
@@ -255,7 +285,15 @@ def _validate_ansible_version(collection_name: str, running_version: str, info: 
     if len(specifiers_set) > 0:
         info["requires_ansible"] = str(specifiers_set)
     if not specifiers_set.contains(running_version):
-        LOGGER.error("Ansible Version running %s - Requirement is %s", running_version, str(specifiers_set))
+        LOGGER.error(
+            "ansible-core version running %s - Required version is %s\n"
+            "  Your ansible-core version is not supported by this AVD release.\n"
+            "  To fix: Install ansible-core version matching %s\n"
+            "  Note: If you want to proceed anyway, set 'avd_ignore_requirements=True'",
+            running_version,
+            str(specifiers_set),
+            str(specifiers_set),
+        )
         return False
     # Keeping this for next deprecation - set the value of deprecation_specifiers_set when needed and adjust message
     if not deprecation_specifiers_set.contains(running_version):
