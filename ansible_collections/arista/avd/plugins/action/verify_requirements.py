@@ -153,7 +153,7 @@ def _check_requirement(req: Requirement, requirements_dict: dict[str, Any]) -> b
             "valid_versions": None,
             "required_version": str(req.specifier) if len(req.specifier) > 0 else None,
         }
-        LOGGER.error("Python library '%s' version running %s - requirement is %s", req.name, installed_version, str(req))
+        return False
     else:
         LOGGER.error("Python library '%s' version running %s - requirement is %s", req.name, installed_version, str(req))
         requirements_dict["mismatched"][req.name] = {
