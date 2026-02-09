@@ -115,8 +115,17 @@ def _check_requirement(req: Requirement, requirements_dict: dict[str, Any]) -> b
             "installed": None,
             "required_version": str(req.specifier) if len(req.specifier) > 0 else None,
         }
+        # Provide helpful installation command
+        install_cmd = f"pip install '{req.name}{req.specifier}'" if req.specifier else f"pip install {req.name}"
         # OK to ignore TRY400 since we don't need the traceback
-        LOGGER.error("Python library '%s' required but not found - requirement is %s", req.name, str(req))  # noqa: TRY400
+        LOGGER.error(  # noqa: TRY400
+            "Python library '%s' required but not found.\n"
+            "  Required: %s\n"
+            "  To install: %s",
+            req.name,
+            str(req),
+            install_cmd,
+        )
         return False
 
     if req.specifier.contains(installed_version):
@@ -146,7 +155,20 @@ def _check_requirement(req: Requirement, requirements_dict: dict[str, Any]) -> b
         LOGGER.info(info_msg)
     elif len(detected_versions) > 1:
         # More than one dist found and none matching the requirements
-        LOGGER.error("Python library '%s' detected versions %s - requirement is %s - more information available with -v", req.name, detected_versions, str(req))
+        upgrade_cmd = f"pip install --upgrade '{req.name}{req.specifier}'"
+        LOGGER.error(
+            "Python library '%s' version mismatch (multiple dist-info found).\n"
+            "  Installed: %s\n"
+            "  Detected versions: %s\n"
+            "  Required: %s\n"
+            "  To fix: %s\n"
+            "  Note: Consider cleaning legacy dist-info folders from site-packages",
+            req.name,
+            installed_version,
+            detected_versions,
+            str(req.specifier),
+            upgrade_cmd,
+        )
         requirements_dict["mismatched"][req.name] = {
             "installed": installed_version,
             "detected_versions": detected_versions,
@@ -155,7 +177,17 @@ def _check_requirement(req: Requirement, requirements_dict: dict[str, Any]) -> b
         }
         return False
     else:
-        LOGGER.error("Python library '%s' version running %s - requirement is %s", req.name, installed_version, str(req))
+        upgrade_cmd = f"pip install --upgrade '{req.name}{req.specifier}'"
+        LOGGER.error(
+            "Python library '%s' version mismatch.\n"
+            "  Installed: %s\n"
+            "  Required: %s\n"
+            "  To fix: %s",
+            req.name,
+            installed_version,
+            str(req.specifier),
+            upgrade_cmd,
+        )
         requirements_dict["mismatched"][req.name] = {
             "installed": installed_version,
             "required_version": str(req.specifier) if len(req.specifier) > 0 else None,
