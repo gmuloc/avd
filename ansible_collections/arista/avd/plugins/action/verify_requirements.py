@@ -6,7 +6,7 @@ import json
 import sys
 import warnings
 from importlib import import_module
-from importlib.metadata import Distribution, PackageNotFoundError, metadata, version
+from importlib.metadata import Distribution, PackageNotFoundError, version
 from logging import getLogger
 from pathlib import Path
 from subprocess import PIPE, Popen
@@ -81,22 +81,15 @@ def _validate_python_version(info: dict[str, Any]) -> bool:
     return True
 
 
-def _parse_requirements(req_str: str) -> tuple[Requirement, list[str]]:
-    """Parse a requirement string and return the parsed object and a list of extras requirements to parse if any."""
+def _parse_requirement(req_str: str) -> Requirement:
+    """Parse a requirement string and return the parsed Requirement object."""
     try:
         req = Requirement(req_str)
     except InvalidRequirement as exc:
         msg = f"Wrong format for requirement {req_str}"
         raise ValueError(msg) from exc
 
-    extras = []
-    if req.extras:
-        for subreq_name in metadata(req.name).get_all("Requires-Dist"):
-            subreq = Requirement(subreq_name)
-            if subreq.marker:
-                extras.extend([subreq_name for marker in subreq.marker._markers if str(marker[0]) == "extra" and str(marker[2]) in req.extras])
-
-    return req, extras
+    return req
 
 
 def _check_requirement(req: Requirement, requirements_dict: dict[str, Any]) -> bool:
@@ -176,10 +169,8 @@ def _validate_python_requirements(requirements: list[str], info: dict[str, Any])
     """
     Validate python lib versions.
 
-    If any extra is present and not running from source, validate the extras as well.
-
     Args:
-      requirements (list): List of requirements for pythom modules
+      requirements (list): List of requirements for python modules
       info (dict): Dictionary to store information to present in ansible logs
 
     Returns:
@@ -197,16 +188,14 @@ def _validate_python_requirements(requirements: list[str], info: dict[str, Any])
     # Remove the comments including inline comments
     requirements = [req.split(" #", maxsplit=1)[0] for req in requirements if req[0] != "#"]
     for raw_req in requirements:
-        req, extras = _parse_requirements(raw_req)
+        req = _parse_requirement(raw_req)
         if RUNNING_FROM_SOURCE and req.name == "pyavd":
-            LOGGER.debug("AVD is running from source, *not* checking pyavd version nor any extra.")
+            LOGGER.debug("AVD is running from source, *not* checking pyavd version.")
             requirements_dict["valid"][req.name] = {
                 "installed": "running from source",
                 "required_version": str(req.specifier) if len(req.specifier) > 0 else None,
             }
             continue
-
-        requirements.extend(extras)
 
         valid = valid and _check_requirement(req, requirements_dict)
 
