@@ -1,0 +1,113 @@
+---
+name: Merge Queue Removal Notification
+
+"on":
+  pull_request:
+    types: [dequeued]
+
+jobs:
+  notify-removal:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get PR details
+        id: pr-details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            return {
+              number: pr.number,
+              title: pr.title,
+              author: pr.user.login,
+              url: pr.html_url
+            };
+
+      - name: Select random sad meme
+        id: meme
+        run: |
+          # Array of sad puppy and caramba meme URLs
+          MEMES=(
+            "https://media.giphy.com/media/6uGhT1O4sxpi8/giphy.gif"
+            "https://media.giphy.com/media/d2lcHJTG5Tscg/giphy.gif"
+            "https://media.giphy.com/media/L95W4wv8nnb9K/giphy.gif"
+            "https://i.imgur.com/AdiBPrO.jpg"
+            "https://i.kym-cdn.com/photos/images/original/002/086/808/90f.gif"
+            "https://media1.tenor.com/m/JIjBdLLGaLcAAAAC/sad-dog.gif"
+            "https://media1.tenor.com/m/1xQdBSTEYCsAAAAC/sad-puppy.gif"
+          )
+
+          # Select random meme
+          RANDOM_INDEX=$((RANDOM % ${#MEMES[@]}))
+          SELECTED_MEME="${MEMES[$RANDOM_INDEX]}"
+
+          echo "meme_url=$SELECTED_MEME" >> $GITHUB_OUTPUT
+
+      - name: Send Google Chat notification
+        env:
+          GOOGLE_CHAT_WEBHOOK: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+          PR_NUMBER: ${{ fromJson(steps.pr-details.outputs.result).number }}
+          PR_TITLE: ${{ fromJson(steps.pr-details.outputs.result).title }}
+          PR_AUTHOR: ${{ fromJson(steps.pr-details.outputs.result).author }}
+          PR_URL: ${{ fromJson(steps.pr-details.outputs.result).url }}
+          MEME_URL: ${{ steps.meme.outputs.meme_url }}
+        run: |
+          curl -X POST "$GOOGLE_CHAT_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "cardsV2": [{
+                "cardId": "merge-queue-removal",
+                "card": {
+                  "header": {
+                    "title": "😢 PR Removed from Merge Queue",
+                    "subtitle": "Sadness is upon us!",
+                    "imageUrl": "https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/error/default/48px.svg",
+                    "imageType": "CIRCLE"
+                  },
+                  "sections": [{
+                    "header": "Pull Request Details",
+                    "widgets": [
+                      {
+                        "decoratedText": {
+                          "topLabel": "PR Number",
+                          "text": "#'"$PR_NUMBER"'"
+                        }
+                      },
+                      {
+                        "decoratedText": {
+                          "topLabel": "Title",
+                          "text": "'"${PR_TITLE//\"/\\\"}"'"
+                        }
+                      },
+                      {
+                        "decoratedText": {
+                          "topLabel": "Author",
+                          "text": "@'"$PR_AUTHOR"'",
+                          "startIcon": {
+                            "knownIcon": "PERSON"
+                          }
+                        }
+                      },
+                      {
+                        "image": {
+                          "imageUrl": "'"$MEME_URL"'",
+                          "altText": "Sad puppy"
+                        }
+                      },
+                      {
+                        "buttonList": {
+                          "buttons": [{
+                            "text": "View Pull Request",
+                            "onClick": {
+                              "openLink": {
+                                "url": "'"$PR_URL"'"
+                              }
+                            }
+                          }]
+                        }
+                      }
+                    ]
+                  }]
+                }
+              }]
+            }'
