@@ -7,11 +7,10 @@ l2leaf:
     - name: aaa-settings-1
       mgmt_ip: 192.168.0.2/24
 
-avd_design_future:
-  # Test for new behaviour of IP RADIUS server commands
-  ip_radius_source_interface_setting: true
-  # Test for new behaviour of IP TACACS server commands
-  ip_tacacs_source_interface_setting: true
+# TODO 7.0: Remove the eos_config_future settings
+custom_structured_configuration_eos_config_future:
+  new_ip_tacacs_cli_order: true
+  new_ip_radius_cli_order: true
 
 aaa_settings:
   # adding test for enable_password.password
@@ -23,6 +22,7 @@ aaa_settings:
     servers:
       - host: 10.10.10.11
         vrf: default
+        timeout: 30
         key: 071B245F5A
         # key take precedence over cleartext_key
         cleartext_key: arista
@@ -31,6 +31,7 @@ aaa_settings:
 
       - host: 10.10.10.1
         vrf: use_mgmt_interface_vrf
+        timeout: 60
         key: 071B245F5A
         groups:
           - TACACS1
