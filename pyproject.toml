@@ -56,9 +56,11 @@ pytest = [
     "anta>=1.7.0",
     "pytest>=8.2.0",
     "pytest-asyncio>=1.2.0",
-    "pytest-codspeed>=3.1.0",
     "pydantic>=2.3.0",
     "referencing>=0.35.0",
+]
+benchmark = [
+    "pytest-codspeed>=3.1.0",
 ]
 
 [tool.ruff]
@@ -143,6 +145,11 @@ convention = "google"
 "**/tests/**/*" = [
   "S101",   # Accept 'assert' in pytest.
   "INP001", # implicit namespace package. Add an `__init__.py` - Tests are not in packages
+  "PLC0415", # `import` should be at the top-level of a file
+]
+"benchmarks/**/*" = [
+  "S101",   # Accept 'assert' in benchmarks (they are tests).
+  "INP001", # implicit namespace package. Add an `__init__.py` - Benchmarks are not in packages
   "PLC0415", # `import` should be at the top-level of a file
 ]
 "python-avd/pyavd/_anta/index.py" = [
