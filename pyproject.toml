@@ -62,7 +62,7 @@ pytest = [
 ]
 benchmark = [
     "pytest-codspeed>=3.1.0",
-    "pytest-test-group>=0.2.0",
+    "pytest-test-groups>=1.2.1",
 ]
 
 [tool.ruff]
