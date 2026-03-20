@@ -701,3 +701,11 @@ jobs:
         with:
           name: pytest-coverage
           path: coverage.xml
+
+  # ----------------------------------- #
+  # PR Benchmarks
+  # ----------------------------------- #
+  pr-benchmarks:
+    name: PR Benchmarks
+    uses: ./.github/workflows/benchmarks-pr.yml
+    secrets: inherit
