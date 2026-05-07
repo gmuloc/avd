@@ -26,6 +26,8 @@ class InternalData:
         "interface",
         "interfaces",
         "pim_rp_addresses",
+        "source_tenants",
+        "tenant",
         "type",
     )
 
@@ -38,6 +40,8 @@ class InternalData:
     interface: str
     interfaces: list
     pim_rp_addresses: list[dict]
+    source_tenants: list[str]
+    tenant: object
     type: str | None
 
 

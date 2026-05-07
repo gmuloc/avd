@@ -33,29 +33,29 @@ class LoopbackInterfacesMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                if (loopback_interface := self._get_vtep_diagnostic_loopback_for_vrf(vrf, tenant)) is not None:
-                    self.structured_config.loopback_interfaces.append(loopback_interface)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            tenant = self.shared_utils.get_source_tenant(vrf)
+            if (loopback_interface := self._get_vtep_diagnostic_loopback_for_vrf(vrf, tenant)) is not None:
+                self.structured_config.loopback_interfaces.append(loopback_interface)
 
-                # The loopbacks have already been filtered in _filtered_tenants
-                # to only contain entries with our hostname
-                for loopback in vrf.loopbacks:
-                    loopback_interface_item = EosCliConfigGen.LoopbackInterfacesItem(
-                        name=f"Loopback{loopback.loopback}",
-                        ip_address=loopback.ip_address,
-                        shutdown=not loopback.enabled,
-                        description=loopback.description,
-                        eos_cli=loopback.raw_eos_cli,
-                    )
-                    if vrf.name != "default":
-                        loopback_interface_item.vrf = vrf.name
-                    if loopback.ospf.enabled and vrf.ospf.enabled:
-                        loopback_interface_item.ospf_area = loopback.ospf.area
-                    if loopback.hardware_forwarding:
-                        loopback_interface_item.hardware_forwarding_id = True
-                    self._set_virtual_source_nat_for_vrf_loopback(loopback_interface_item.vrf, loopback_interface_item.ip_address)
-                    self.structured_config.loopback_interfaces.append(loopback_interface_item)
+            # The loopbacks have already been filtered in _filtered_tenants
+            # to only contain entries with our hostname
+            for loopback in vrf.loopbacks:
+                loopback_interface_item = EosCliConfigGen.LoopbackInterfacesItem(
+                    name=f"Loopback{loopback.loopback}",
+                    ip_address=loopback.ip_address,
+                    shutdown=not loopback.enabled,
+                    description=loopback.description,
+                    eos_cli=loopback.raw_eos_cli,
+                )
+                if vrf.name != "default":
+                    loopback_interface_item.vrf = vrf.name
+                if loopback.ospf.enabled and vrf.ospf.enabled:
+                    loopback_interface_item.ospf_area = loopback.ospf.area
+                if loopback.hardware_forwarding:
+                    loopback_interface_item.hardware_forwarding_id = True
+                self._set_virtual_source_nat_for_vrf_loopback(loopback_interface_item.vrf, loopback_interface_item.ip_address)
+                self.structured_config.loopback_interfaces.append(loopback_interface_item)
 
     def _get_vtep_diagnostic_loopback_for_vrf(
         self: AvdStructuredConfigNetworkServicesProtocol,

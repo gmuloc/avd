@@ -30,16 +30,15 @@ class RouterPimSparseModeMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                if vrf_rps := getattr(vrf._internal_data, "pim_rp_addresses", None):
-                    ipv4_config = EosCliConfigGen.RouterPimSparseMode.VrfsItem.Ipv4()
-                    for rps in vrf_rps:
-                        rpaddress = EosCliConfigGen.RouterPimSparseMode.VrfsItem.Ipv4.RpAddressesItem()
-                        rpaddress.address = rps["address"]
-                        for group in get(rps, "groups", []):
-                            rpaddress.groups.append(group)
-                        for access_list in get(rps, "access_lists", []):
-                            rpaddress.access_lists.append(access_list)
-                        ipv4_config.rp_addresses.append_unique(rpaddress)
-                    self.structured_config.router_pim_sparse_mode.vrfs.append_new(name=vrf.name, ipv4=ipv4_config)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            if vrf_rps := getattr(vrf._internal_data, "pim_rp_addresses", None):
+                ipv4_config = EosCliConfigGen.RouterPimSparseMode.VrfsItem.Ipv4()
+                for rps in vrf_rps:
+                    rpaddress = EosCliConfigGen.RouterPimSparseMode.VrfsItem.Ipv4.RpAddressesItem()
+                    rpaddress.address = rps["address"]
+                    for group in get(rps, "groups", []):
+                        rpaddress.groups.append(group)
+                    for access_list in get(rps, "access_lists", []):
+                        rpaddress.access_lists.append(access_list)
+                    ipv4_config.rp_addresses.append_unique(rpaddress)
+                self.structured_config.router_pim_sparse_mode.vrfs.append_new(name=vrf.name, ipv4=ipv4_config)

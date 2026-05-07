@@ -33,13 +33,14 @@ class SpanningTreeMixin(Protocol):
 
         vlan_stp_priorities = {}
         non_default_vlans = set()
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            for svi in vrf.svis:
+                if (priority := svi.spanning_tree_priority) is None:
+                    continue
+                vlan_stp_priorities.setdefault(priority, set()).add(svi.id)
+                non_default_vlans.add(svi.id)
+
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for svi in vrf.svis:
-                    if (priority := svi.spanning_tree_priority) is None:
-                        continue
-                    vlan_stp_priorities.setdefault(priority, set()).add(svi.id)
-                    non_default_vlans.add(svi.id)
             for l2vlan in tenant.l2vlans:
                 if (priority := l2vlan.spanning_tree_priority) is None:
                     continue

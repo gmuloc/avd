@@ -32,41 +32,40 @@ class StaticRoutesMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                # Static routes are already filtered inside filtered_tenants
-                for static_route in vrf.static_routes:
-                    static_route_item = EosCliConfigGen.StaticRoutesItem(
-                        vrf=vrf.name,
-                        prefix=static_route.prefix,
-                        interface=static_route.interface,
-                        next_hop=static_route.next_hop,
-                        track_bfd=static_route.track_bfd,
-                        distance=static_route.distance,
-                        tag=static_route.tag,
-                        metric=static_route.metric,
-                        name=static_route.name,
-                    )
-                    self.structured_config.static_routes.append_unique(static_route_item)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            # Static routes are already filtered inside filtered_tenants
+            for static_route in vrf.static_routes:
+                static_route_item = EosCliConfigGen.StaticRoutesItem(
+                    vrf=vrf.name,
+                    prefix=static_route.prefix,
+                    interface=static_route.interface,
+                    next_hop=static_route.next_hop,
+                    track_bfd=static_route.track_bfd,
+                    distance=static_route.distance,
+                    tag=static_route.tag,
+                    metric=static_route.metric,
+                    name=static_route.name,
+                )
+                self.structured_config.static_routes.append_unique(static_route_item)
 
-                for svi in vrf.svis:
-                    if not svi.ip_virtual_router_addresses or not svi.ip_address:
-                        # Skip svi if VARP is not set or if there is no unique ip_address
+            for svi in vrf.svis:
+                if not svi.ip_virtual_router_addresses or not svi.ip_address:
+                    # Skip svi if VARP is not set or if there is no unique ip_address
+                    continue
+
+                for virtual_router_address in svi.ip_virtual_router_addresses:
+                    if "/" not in virtual_router_address:
+                        # Only create static routes for VARP entries with masks
                         continue
 
-                    for virtual_router_address in svi.ip_virtual_router_addresses:
-                        if "/" not in virtual_router_address:
-                            # Only create static routes for VARP entries with masks
-                            continue
+                    static_route_item = EosCliConfigGen.StaticRoutesItem(
+                        prefix=str(ipaddress.ip_network(virtual_router_address, strict=False)),
+                        vrf=vrf.name,
+                        name="VARP",
+                        interface=f"Vlan{svi.id}",
+                    )
 
-                        static_route_item = EosCliConfigGen.StaticRoutesItem(
-                            prefix=str(ipaddress.ip_network(virtual_router_address, strict=False)),
-                            vrf=vrf.name,
-                            name="VARP",
-                            interface=f"Vlan{svi.id}",
-                        )
-
-                        self.structured_config.static_routes.append_unique(static_route_item)
+                    self.structured_config.static_routes.append_unique(static_route_item)
 
     def set_zscaler_ie_connection_static_route(self: AvdStructuredConfigNetworkServicesProtocol, destination_ip: str, name: str, next_hop: str) -> None:
         """Set the static route for one Zscaler Internet Exit connection."""

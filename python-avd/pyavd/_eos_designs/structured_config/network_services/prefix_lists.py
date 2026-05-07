@@ -47,24 +47,24 @@ class PrefixListsMixin(Protocol):
     def _mlag_ibgp_peering_subnets_without_redistribution(self: AvdStructuredConfigNetworkServicesProtocol) -> list:
         """Return sorted list of MLAG peerings for VRFs where MLAG iBGP peering should not be redistributed."""
         mlag_prefixes = set()
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                if self._mlag_ibgp_peering_vlan_vrf(vrf, tenant) is None:
-                    continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            tenant = self.shared_utils.get_source_tenant(vrf)
+            if self._mlag_ibgp_peering_vlan_vrf(vrf, tenant) is None:
+                continue
 
-                if not self._exclude_mlag_ibgp_peering_from_redistribute(vrf, tenant):
-                    # By default the BGP peering is redistributed, so we only need the prefix-list for the false case.
-                    continue
+            if not self._exclude_mlag_ibgp_peering_from_redistribute(vrf, tenant):
+                # By default the BGP peering is redistributed, so we only need the prefix-list for the false case.
+                continue
 
-                # RFC5549 uses link-local IPv6, so there is no routable MLAG prefix to add.
-                if self.inputs.underlay_rfc5549 and self.inputs.overlay_mlag_rfc5549:
-                    continue
+            # RFC5549 uses link-local IPv6, so there is no routable MLAG prefix to add.
+            if self.inputs.underlay_rfc5549 and self.inputs.overlay_mlag_rfc5549:
+                continue
 
-                # Convert mlag_ip_address to network prefix string and add to set.
-                if self.shared_utils.underlay_ipv6_numbered:
-                    mlag_prefixes.add(str(ip_network(self.get_ipv6_mlag_peering_ip(vrf), strict=False)))
-                else:
-                    mlag_prefixes.add(str(ip_network(self.get_ipv4_mlag_peering_ip(vrf), strict=False)))
+            # Convert mlag_ip_address to network prefix string and add to set.
+            if self.shared_utils.underlay_ipv6_numbered:
+                mlag_prefixes.add(str(ip_network(self.get_ipv6_mlag_peering_ip(vrf), strict=False)))
+            else:
+                mlag_prefixes.add(str(ip_network(self.get_ipv4_mlag_peering_ip(vrf), strict=False)))
 
         return natural_sort(mlag_prefixes)
 

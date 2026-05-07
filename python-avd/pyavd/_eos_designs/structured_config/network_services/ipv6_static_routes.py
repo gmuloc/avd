@@ -31,19 +31,18 @@ class Ipv6StaticRoutesMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for static_route in vrf.ipv6_static_routes:
-                    static_route_item = EosCliConfigGen.Ipv6StaticRoutesItem()
-                    static_route_item._update(
-                        vrf=vrf.name,
-                        prefix=static_route.prefix,
-                        interface=static_route.interface,
-                        next_hop=static_route.next_hop,
-                        track_bfd=static_route.track_bfd,
-                        distance=static_route.distance,
-                        tag=static_route.tag,
-                        metric=static_route.metric,
-                        name=static_route.name,
-                    )
-                    self.structured_config.ipv6_static_routes.append_unique(static_route_item)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            for static_route in vrf.ipv6_static_routes:
+                static_route_item = EosCliConfigGen.Ipv6StaticRoutesItem()
+                static_route_item._update(
+                    vrf=vrf.name,
+                    prefix=static_route.prefix,
+                    interface=static_route.interface,
+                    next_hop=static_route.next_hop,
+                    track_bfd=static_route.track_bfd,
+                    distance=static_route.distance,
+                    tag=static_route.tag,
+                    metric=static_route.metric,
+                    name=static_route.name,
+                )
+                self.structured_config.ipv6_static_routes.append_unique(static_route_item)

@@ -71,7 +71,11 @@ class RouterBgpMixin(Protocol):
         ] = []
         peer_peergroups = set()
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
+                if self.shared_utils.get_source_tenant(vrf) is not tenant:
+                    continue
+
                 # bgp_peers is already filtered in filtered_tenants to only contain entries with our hostname
                 if not (vrf.bgp_peers or vrf.bgp_peer_groups):
                     continue
@@ -133,137 +137,137 @@ class RouterBgpMixin(Protocol):
             return
 
         # For VRF default the bgp_vrf variable will be set to the global router_bgp for some settings.
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                if not self.shared_utils.bgp_enabled_for_vrf(vrf):
-                    continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            tenant = self.shared_utils.get_source_tenant(vrf)
+            if not self.shared_utils.bgp_enabled_for_vrf(vrf):
+                continue
 
-                bgp_vrf = EosCliConfigGen.RouterBgp.VrfsItem()
-                if vrf.bgp.raw_eos_cli:
-                    bgp_vrf.eos_cli = vrf.bgp.raw_eos_cli
+            bgp_vrf = EosCliConfigGen.RouterBgp.VrfsItem()
+            if vrf.bgp.raw_eos_cli:
+                bgp_vrf.eos_cli = vrf.bgp.raw_eos_cli
 
-                if vrf.bgp.structured_config:
-                    self.custom_structured_configs.nested.router_bgp.vrfs.obtain(vrf.name)._deepmerge(
-                        vrf.bgp.structured_config, list_merge=self.custom_structured_configs.list_merge_strategy
-                    )
+            if vrf.bgp.structured_config:
+                self.custom_structured_configs.nested.router_bgp.vrfs.obtain(vrf.name)._deepmerge(
+                    vrf.bgp.structured_config, list_merge=self.custom_structured_configs.list_merge_strategy
+                )
 
-                vrf_address_families = {af for af in vrf.address_families if af in self.shared_utils.overlay_address_families}
-                if self.shared_utils.is_wan_vrf(vrf):
-                    # If the VRF is a WAN VRF, EVPN RTs are needed.
-                    vrf_address_families.add("evpn")
+            vrf_address_families = {af for af in vrf.address_families if af in self.shared_utils.overlay_address_families}
+            if self.shared_utils.is_wan_vrf(vrf):
+                # If the VRF is a WAN VRF, EVPN RTs are needed.
+                vrf_address_families.add("evpn")
 
-                if vrf_address_families:
-                    vrf_rd = self.get_vrf_rd(vrf, tenant)
-                    # The called function in-place updates the bgp_vrf dict.
-                    self._update_router_bgp_vrf_evpn_or_mpls_cfg(bgp_vrf, vrf, vrf_rd, vrf_address_families)
+            if vrf_address_families:
+                vrf_rd = self.get_vrf_rd(vrf, tenant)
+                # The called function in-place updates the bgp_vrf dict.
+                self._update_router_bgp_vrf_evpn_or_mpls_cfg(bgp_vrf, vrf, vrf_rd, vrf_address_families)
 
-                if vrf.name != "default":
-                    bgp_vrf.router_id = self.get_protocol_vrf_router_id(vrf, tenant, vrf.bgp.router_id)
+            if vrf.name != "default":
+                bgp_vrf.router_id = self.get_protocol_vrf_router_id(vrf, tenant, vrf.bgp.router_id)
 
-                    if vrf.redistribute_connected:
-                        bgp_vrf.redistribute.connected.enabled = True
-                    # Redistribution of static routes for VRF default are handled elsewhere
-                    # since there is a choice between redistributing to underlay or overlay.
-                    if vrf.redistribute_static or (vrf.static_routes and vrf.redistribute_static is None):
-                        bgp_vrf.redistribute.static.enabled = True
+                if vrf.redistribute_connected:
+                    bgp_vrf.redistribute.connected.enabled = True
+                # Redistribution of static routes for VRF default are handled elsewhere
+                # since there is a choice between redistributing to underlay or overlay.
+                if vrf.redistribute_static or (vrf.static_routes and vrf.redistribute_static is None):
+                    bgp_vrf.redistribute.static.enabled = True
 
-                    if self.shared_utils.inband_mgmt_vrf == vrf.name and self.shared_utils.inband_management_parent_vlans:
-                        bgp_vrf.redistribute.attached_host.enabled = True
+                if self.shared_utils.inband_mgmt_vrf == vrf.name and self.shared_utils.inband_management_parent_vlans:
+                    bgp_vrf.redistribute.attached_host.enabled = True
 
-                    # Common things but need it repeated between default and non-default since type checker gets too confused
-                    # about the type of bgp_vrf vs. bgp_peer_config.
-                    for aggregate_address in vrf.aggregate_addresses:
-                        # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
-                        bgp_vrf.aggregate_addresses.append(
-                            aggregate_address._cast_as(EosCliConfigGen.RouterBgp.VrfsItem.AggregateAddressesItem, ignore_extra_keys=True)
-                        )
-
-                else:
-                    # VRF default
-
-                    # RD/RT and/or eos_cli/struct_cfg which should go under the vrf default context.
-                    # Any peers added later will be put directly under router_bgp
-                    if bgp_vrf:
-                        bgp_vrf.name = vrf.name
-                        self.structured_config.router_bgp.vrfs.append(bgp_vrf)
-
-                    # Resetting bgp_vrf so we only add global keys if there are any neighbors for VRF default
-                    bgp_vrf = self.structured_config.router_bgp
-
-                    if self.shared_utils.underlay_routing_protocol == "none":
-                        # We need to add redistribute connected for the default VRF when underlay_routing_protocol is "none"
-                        bgp_vrf.redistribute.connected.enabled = True
-
-                    # Common things but need it repeated between default and non-default since type checker gets too confused
-                    # about the type of bgp_vrf vs. bgp_peer_config.
-                    for aggregate_address in vrf.aggregate_addresses:
-                        # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
-                        bgp_vrf.aggregate_addresses.append(aggregate_address._cast_as(EosCliConfigGen.RouterBgp.AggregateAddressesItem, ignore_extra_keys=True))
-
-                # MLAG IBGP Peering VLANs per VRF
-                # Will only be configured for VRF default if underlay_routing_protocol == "none".
-                if (vlan_id := self._mlag_ibgp_peering_vlan_vrf(vrf, tenant)) is not None:
-                    self._update_router_bgp_vrf_mlag_neighbor_cfg(bgp_vrf, vrf, tenant, vlan_id)
-                    if self.shared_utils.use_separate_peer_group_for_mlag_vrfs:
-                        self.structured_config_utils.set_once_peer_group_mlag_ipv4_vrfs_peer()
-                    else:
-                        self.structured_config_utils.set_once_peer_group_mlag_ipv4_underlay_peer()
-
-                for bgp_peer in vrf.bgp_peers:
-                    peer_ip = bgp_peer.ip_address
-                    address_family = bgp_vrf.address_family_ipv6 if ipaddress.ip_address(peer_ip).version == 6 else bgp_vrf.address_family_ipv4
-                    address_family.neighbors.append_new(
-                        ip_address=peer_ip,
-                        activate=True,
-                        prefix_list_in=bgp_peer.prefix_list_in,
-                        prefix_list_out=bgp_peer.prefix_list_out,
-                    )
-
+                # Common things but need it repeated between default and non-default since type checker gets too confused
+                # about the type of bgp_vrf vs. bgp_peer_config.
+                for aggregate_address in vrf.aggregate_addresses:
                     # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
-                    bgp_peer_config = bgp_peer._cast_as(bgp_vrf.NeighborsItem, ignore_extra_keys=True)
-                    # encrypt password if needed
-                    bgp_peer_config.password = self.shared_utils.get_bgp_password(bgp_peer)
+                    bgp_vrf.aggregate_addresses.append(
+                        aggregate_address._cast_as(EosCliConfigGen.RouterBgp.VrfsItem.AggregateAddressesItem, ignore_extra_keys=True)
+                    )
 
-                    if bgp_peer.set_ipv4_next_hop or bgp_peer.set_ipv6_next_hop:
-                        route_map = f"RM-{vrf.name}-{peer_ip}-SET-NEXT-HOP-OUT"
-                        bgp_peer_config.route_map_out = route_map
-                        if bgp_peer_config.default_originate and not bgp_peer_config.default_originate.route_map:
-                            bgp_peer_config.default_originate.route_map = route_map
+            else:
+                # VRF default
 
-                    # Needing this since type checker gets too confused about the type of bgp_vrf vs. bgp_peer_config.
-                    if vrf.name == "default":
-                        # VRF default is added directly under router_bgp
-                        bgp_vrf = cast("EosCliConfigGen.RouterBgp", bgp_vrf)
-                        bgp_peer_config = cast("EosCliConfigGen.RouterBgp.NeighborsItem", bgp_peer_config)
-                        if vrf._get_defined_attr("validate_bgp_peers") is False:
-                            bgp_peer_config.metadata.validate_state = False
-                        bgp_vrf.neighbors.append(bgp_peer_config)
-                    else:
-                        bgp_vrf = cast("EosCliConfigGen.RouterBgp.VrfsItem", bgp_vrf)
-                        bgp_peer_config = cast("EosCliConfigGen.RouterBgp.VrfsItem.NeighborsItem", bgp_peer_config)
-                        if vrf.validate_bgp_peers is True:
-                            bgp_peer_config.metadata.validate_state = True
-                        bgp_vrf.neighbors.append(bgp_peer_config)
+                # RD/RT and/or eos_cli/struct_cfg which should go under the vrf default context.
+                # Any peers added later will be put directly under router_bgp
+                if bgp_vrf:
+                    bgp_vrf.name = vrf.name
+                    self.structured_config.router_bgp.vrfs.append(bgp_vrf)
 
-                if vrf.ospf.enabled and vrf.redistribute_ospf and (not vrf.ospf.nodes or self.shared_utils.hostname in vrf.ospf.nodes):
-                    bgp_vrf.redistribute.ospf.enabled = True
+                # Resetting bgp_vrf so we only add global keys if there are any neighbors for VRF default
+                bgp_vrf = self.structured_config.router_bgp
 
-                if bgp_vrf.neighbors and self.inputs.bgp_update_wait_install and self.shared_utils.platform_settings.feature_support.bgp_update_wait_install:
-                    bgp_vrf.updates.wait_install = True
+                if self.shared_utils.underlay_routing_protocol == "none":
+                    # We need to add redistribute connected for the default VRF when underlay_routing_protocol is "none"
+                    bgp_vrf.redistribute.connected.enabled = True
 
-                # Skip adding the VRF if we have no config.
-                if not bgp_vrf:
-                    continue
+                # Common things but need it repeated between default and non-default since type checker gets too confused
+                # about the type of bgp_vrf vs. bgp_peer_config.
+                for aggregate_address in vrf.aggregate_addresses:
+                    # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
+                    bgp_vrf.aggregate_addresses.append(aggregate_address._cast_as(EosCliConfigGen.RouterBgp.AggregateAddressesItem, ignore_extra_keys=True))
 
+            # MLAG IBGP Peering VLANs per VRF
+            # Will only be configured for VRF default if underlay_routing_protocol == "none".
+            if (vlan_id := self._mlag_ibgp_peering_vlan_vrf(vrf, tenant)) is not None:
+                self._update_router_bgp_vrf_mlag_neighbor_cfg(bgp_vrf, vrf, tenant, vlan_id)
+                if self.shared_utils.use_separate_peer_group_for_mlag_vrfs:
+                    self.structured_config_utils.set_once_peer_group_mlag_ipv4_vrfs_peer()
+                else:
+                    self.structured_config_utils.set_once_peer_group_mlag_ipv4_underlay_peer()
+
+            for bgp_peer in vrf.bgp_peers:
+                peer_ip = bgp_peer.ip_address
+                address_family = bgp_vrf.address_family_ipv6 if ipaddress.ip_address(peer_ip).version == 6 else bgp_vrf.address_family_ipv4
+                address_family.neighbors.append_new(
+                    ip_address=peer_ip,
+                    activate=True,
+                    prefix_list_in=bgp_peer.prefix_list_in,
+                    prefix_list_out=bgp_peer.prefix_list_out,
+                )
+
+                # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
+                bgp_peer_config = bgp_peer._cast_as(bgp_vrf.NeighborsItem, ignore_extra_keys=True)
+                # encrypt password if needed
+                bgp_peer_config.password = self.shared_utils.get_bgp_password(bgp_peer)
+
+                if bgp_peer.set_ipv4_next_hop or bgp_peer.set_ipv6_next_hop:
+                    route_map = f"RM-{vrf.name}-{peer_ip}-SET-NEXT-HOP-OUT"
+                    bgp_peer_config.route_map_out = route_map
+                    if bgp_peer_config.default_originate and not bgp_peer_config.default_originate.route_map:
+                        bgp_peer_config.default_originate.route_map = route_map
+
+                # Needing this since type checker gets too confused about the type of bgp_vrf vs. bgp_peer_config.
                 if vrf.name == "default":
                     # VRF default is added directly under router_bgp
                     bgp_vrf = cast("EosCliConfigGen.RouterBgp", bgp_vrf)
-                    self.structured_config.router_bgp._deepmerge(bgp_vrf)
+                    bgp_peer_config = cast("EosCliConfigGen.RouterBgp.NeighborsItem", bgp_peer_config)
+                    if vrf._get_defined_attr("validate_bgp_peers") is False:
+                        bgp_peer_config.metadata.validate_state = False
+                    bgp_vrf.neighbors.append(bgp_peer_config)
                 else:
                     bgp_vrf = cast("EosCliConfigGen.RouterBgp.VrfsItem", bgp_vrf)
-                    bgp_vrf.name = vrf.name
-                    maybe_existing_vrf = self.structured_config.router_bgp.vrfs.obtain(vrf.name)
-                    maybe_existing_vrf._combine(bgp_vrf)
+                    bgp_peer_config = cast("EosCliConfigGen.RouterBgp.VrfsItem.NeighborsItem", bgp_peer_config)
+                    if vrf.validate_bgp_peers is True:
+                        bgp_peer_config.metadata.validate_state = True
+                    bgp_vrf.neighbors.append(bgp_peer_config)
+
+            if vrf.ospf.enabled and vrf.redistribute_ospf and (not vrf.ospf.nodes or self.shared_utils.hostname in vrf.ospf.nodes):
+                bgp_vrf.redistribute.ospf.enabled = True
+
+            if bgp_vrf.neighbors and self.inputs.bgp_update_wait_install and self.shared_utils.platform_settings.feature_support.bgp_update_wait_install:
+                bgp_vrf.updates.wait_install = True
+
+            # Skip adding the VRF if we have no config.
+            if not bgp_vrf:
+                continue
+
+            if vrf.name == "default":
+                # VRF default is added directly under router_bgp
+                bgp_vrf = cast("EosCliConfigGen.RouterBgp", bgp_vrf)
+                self.structured_config.router_bgp._deepmerge(bgp_vrf)
+            else:
+                bgp_vrf = cast("EosCliConfigGen.RouterBgp.VrfsItem", bgp_vrf)
+                bgp_vrf.name = vrf.name
+                maybe_existing_vrf = self.structured_config.router_bgp.vrfs.obtain(vrf.name)
+                maybe_existing_vrf._combine(bgp_vrf)
 
     def _update_router_bgp_vrf_evpn_rd_rt_rewrite_evpn_af_cfg(
         self: AvdStructuredConfigNetworkServicesProtocol,
@@ -438,10 +442,13 @@ class RouterBgpMixin(Protocol):
             # For SVIs
             vrf_svis_bundle_dict = {}
             vrf_svis_non_bundle_dict = {}
-            for vrf in tenant.vrfs:
+            for vrf in self.shared_utils.filtered_network_services_vrfs:
                 vrf_svis_non_bundle_dict[vrf.name] = []
                 vrf_svis_bundle_dict[vrf.name] = {}
-                sorted_svi_list = sorted(vrf.svis, key=self._get_vlan_aware_bundle_name_tuple_for_svis)
+                sorted_svi_list = sorted(
+                    [svi for svi in vrf.svis if self.shared_utils.get_source_tenant(svi).name == tenant.name],
+                    key=self._get_vlan_aware_bundle_name_tuple_for_svis,
+                )
                 bundle_groups_svis = itertools_groupby(sorted_svi_list, self._get_vlan_aware_bundle_name_tuple_for_svis)
                 for vlan_aware_bundle_name_tuple, svis in bundle_groups_svis:
                     bundle_name, is_evpn_vlan_bundle = vlan_aware_bundle_name_tuple
@@ -475,9 +482,10 @@ class RouterBgpMixin(Protocol):
             return
 
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
                 for svi in tenant_svis_l2vlans_dict[tenant.name]["svi_non_bundle"][vrf.name]:
-                    if (vlan := self._router_bgp_vlans_vlan(svi, tenant, vrf)) is not None:
+                    if (vlan := self._router_bgp_vlans_vlan(svi, self.shared_utils.get_source_tenant(svi), vrf)) is not None:
                         self.structured_config.router_bgp.vlans.append(vlan, ignore_fields=("metadata",))
 
             # L2 Vlans per Tenant
@@ -508,7 +516,8 @@ class RouterBgpMixin(Protocol):
             id=vlan.id,
             rd=vlan_rd,
         )
-        bgp_vlan.metadata.tenants.append_unique(tenant.name)
+        for tenant_name in self.shared_utils.get_source_tenant_names(vlan) or [tenant.name]:
+            bgp_vlan.metadata.tenants.append_unique(tenant_name)
         bgp_vlan.route_targets.both.append(vlan_rt)
         bgp_vlan.redistribute_routes.append("learned")
 
@@ -624,7 +633,7 @@ class RouterBgpMixin(Protocol):
 
         for tenant in self.shared_utils.filtered_tenants:
             l2vlan_svi_vlan_aware_bundles = {}
-            for vrf in tenant.vrfs:
+            for vrf in self.shared_utils.filtered_network_services_vrfs:
                 for bundle_name, svis in tenant_svis_l2vlans_dict[tenant.name]["svi_bundle"][vrf.name].items():
                     # SVIs which have an evpn_vlan_bundle defined
                     if bundle_name in l2vlan_svi_vlan_aware_bundles:

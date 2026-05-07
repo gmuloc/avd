@@ -35,14 +35,13 @@ class EthernetInterfacesMixin(Protocol):
             return
 
         if self.shared_utils.network_services_l3:
-            for tenant in self.shared_utils.filtered_tenants:
-                for vrf in tenant.vrfs:
-                    # The l3_interfaces has already been filtered in filtered_tenants
-                    # to only contain entries with our hostname
-                    self._set_l3_interfaces(vrf, tenant)
+            for vrf in self.shared_utils.filtered_network_services_vrfs:
+                # The l3_interfaces has already been filtered in filtered_tenants
+                # to only contain entries with our hostname
+                self._set_l3_interfaces(vrf, self.shared_utils.get_source_tenant(vrf))
 
-                    # Member ethernet ports for Port-Channel interface
-                    self._set_l3_port_channel_members(vrf)
+                # Member ethernet ports for Port-Channel interface
+                self._set_l3_port_channel_members(vrf)
 
         if self.shared_utils.network_services_l1:
             for tenant in self.shared_utils.filtered_tenants:
@@ -104,6 +103,7 @@ class EthernetInterfacesMixin(Protocol):
     ) -> None:
         """Set the structured_config for ethernet_interfaces with the l3interfaces."""
         for l3_interface in vrf.l3_interfaces:
+            tenant = self.shared_utils.get_source_tenant(l3_interface)
             nodes_length = len(l3_interface.nodes)
             if (
                 len(l3_interface.interfaces) != nodes_length

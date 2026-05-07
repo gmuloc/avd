@@ -37,15 +37,14 @@ class UtilsMixin(Protocol):
         ):
             return False
 
-        for tenant in self.shared_utils.filtered_tenants:
-            if "default" not in tenant.vrfs:
-                continue
-
-            if "evpn" in tenant.vrfs["default"].address_families:
-                if self.inputs.underlay_filter_peer_as:
-                    msg = "'underlay_filter_peer_as' cannot be used while there are EVPN services in the default VRF."
-                    raise AristaAvdError(msg)
-                return True
+        if (
+            "default" in self.shared_utils.filtered_network_services_vrfs
+            and "evpn" in self.shared_utils.filtered_network_services_vrfs["default"].address_families
+        ):
+            if self.inputs.underlay_filter_peer_as:
+                msg = "'underlay_filter_peer_as' cannot be used while there are EVPN services in the default VRF."
+                raise AristaAvdError(msg)
+            return True
 
         return False
 
@@ -53,11 +52,8 @@ class UtilsMixin(Protocol):
     def _vrf_default_ipv4_subnets(self: AvdStructuredConfigNetworkServicesProtocol) -> list[str]:
         """Return list of ipv4 subnets in VRF "default"."""
         subnets = set()
-        for tenant in self.shared_utils.filtered_tenants:
-            if "default" not in tenant.vrfs:
-                continue
-
-            for svi in tenant.vrfs["default"].svis:
+        if "default" in self.shared_utils.filtered_network_services_vrfs:
+            for svi in self.shared_utils.filtered_network_services_vrfs["default"].svis:
                 ip_address = default(svi.ip_address, svi.ip_address_virtual)
                 if ip_address is None:
                     continue
@@ -89,17 +85,14 @@ class UtilsMixin(Protocol):
         """
         vrf_default_ipv4_static_routes = set()
         vrf_default_redistribute_static = True
-        for tenant in self.shared_utils.filtered_tenants:
-            if "default" not in tenant.vrfs:
-                continue
-
-            if not (static_routes := tenant.vrfs["default"].static_routes):
-                continue
+        if "default" in self.shared_utils.filtered_network_services_vrfs:
+            vrf = self.shared_utils.filtered_network_services_vrfs["default"]
+            static_routes = vrf.static_routes
 
             for static_route in static_routes:
                 vrf_default_ipv4_static_routes.add(static_route.prefix)
 
-            vrf_default_redistribute_static = default(tenant.vrfs["default"].redistribute_static, vrf_default_redistribute_static)
+            vrf_default_redistribute_static = default(vrf.redistribute_static, vrf_default_redistribute_static)
 
         if (self.shared_utils.overlay_evpn and self.shared_utils.overlay_vtep) or self.shared_utils.is_wan_router:
             # This is an EVPN VTEP

@@ -95,8 +95,9 @@ class VxlanInterfaceMixin(Protocol):
         # The entries are {<vni>: (<type>, <name>, <tenant>)}
         vnis: dict[int, set[VniContext]] = defaultdict(set)
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                self._set_vxlan_interface_config_for_vrf(vrf, tenant, vnis)
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
+                self._set_vxlan_interface_config_for_vrf(vrf, tenant, vnis, include_vrf_vni=self.shared_utils.get_source_tenant(vrf) is tenant)
 
             if not self.shared_utils.network_services_l2:
                 continue
@@ -118,6 +119,7 @@ class VxlanInterfaceMixin(Protocol):
         vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem,
         tenant: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem,
         vnis: dict[int, set[VniContext]],
+        include_vrf_vni: bool = True,
     ) -> None:
         """
         Set one Vxlan1 VRF in structured_config and its associated SVI VLANs.
@@ -126,11 +128,11 @@ class VxlanInterfaceMixin(Protocol):
         the SVI VLANs are set only if the device has L2 services
         """
         if self.shared_utils.network_services_l2:
-            for svi in vrf.svis:
+            for svi in [svi for svi in vrf.svis if self.shared_utils.get_source_tenant(svi) is tenant]:
                 if svi.vxlan:
                     self._set_vxlan_interface_config_for_vlan(svi, tenant, vnis)
 
-        if self.shared_utils.network_services_l3 and (self.shared_utils.overlay_evpn_vxlan or self.shared_utils.is_wan_router):
+        if include_vrf_vni and self.shared_utils.network_services_l3 and (self.shared_utils.overlay_evpn_vxlan or self.shared_utils.is_wan_router):
             vrf_name = vrf.name
             is_wan_vrf = self.shared_utils.is_wan_vrf(vrf)
             # Only configure VNI for VRF if the VRF is EVPN enabled

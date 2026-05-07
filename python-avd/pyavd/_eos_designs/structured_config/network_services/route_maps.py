@@ -33,25 +33,22 @@ class RouteMapsMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                # BGP Peers are already filtered in filtered_tenants
-                #  so we only have entries with our hostname in them.
-                for bgp_peer in vrf.bgp_peers:
-                    ipv4_next_hop = bgp_peer.set_ipv4_next_hop
-                    ipv6_next_hop = bgp_peer.set_ipv6_next_hop
-                    if ipv4_next_hop is None and ipv6_next_hop is None:
-                        continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            # BGP Peers are already filtered in filtered_tenants
+            #  so we only have entries with our hostname in them.
+            for bgp_peer in vrf.bgp_peers:
+                ipv4_next_hop = bgp_peer.set_ipv4_next_hop
+                ipv6_next_hop = bgp_peer.set_ipv6_next_hop
+                if ipv4_next_hop is None and ipv6_next_hop is None:
+                    continue
 
-                    route_map_name = f"RM-{vrf.name}-{bgp_peer.ip_address}-SET-NEXT-HOP-OUT"
-                    set_action = f"ip next-hop {ipv4_next_hop}" if ipv4_next_hop is not None else f"ipv6 next-hop {ipv6_next_hop}"
+                route_map_name = f"RM-{vrf.name}-{bgp_peer.ip_address}-SET-NEXT-HOP-OUT"
+                set_action = f"ip next-hop {ipv4_next_hop}" if ipv4_next_hop is not None else f"ipv6 next-hop {ipv6_next_hop}"
 
-                    route_maps_item = EosCliConfigGen.RouteMapsItem(name=route_map_name)
-                    route_maps_item.sequence_numbers.append_new(
-                        sequence=10, type="permit", set=EosCliConfigGen.RouteMapsItem.SequenceNumbersItem.Set([set_action])
-                    )
+                route_maps_item = EosCliConfigGen.RouteMapsItem(name=route_map_name)
+                route_maps_item.sequence_numbers.append_new(sequence=10, type="permit", set=EosCliConfigGen.RouteMapsItem.SequenceNumbersItem.Set([set_action]))
 
-                    self.structured_config.route_maps.append(route_maps_item)
+                self.structured_config.route_maps.append(route_maps_item)
         self._route_maps_vrf_default()
 
         if self._mlag_ibgp_peering_subnets_without_redistribution:

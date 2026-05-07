@@ -339,35 +339,34 @@ class UplinksMixin(EosDesignsFactsProtocol, Protocol):
 
         # Reusing regular p2p logic for main interface.
         uplink = self._get_p2p_uplink(uplink_index, uplink_interface, uplink_switch, uplink_switch_interface)
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                # Only keep VRFs present on the uplink switch as well.
-                # Also skip VRF default since it is covered on the parent interface.
-                # ok to use like this because this is only ever called inside EosDesignsFacts
-                uplink_switch_vrfs = uplink_switch_facts.shared_utils.vrfs
-                if vrf.name == "default" or vrf.name not in uplink_switch_vrfs:
-                    continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            # Only keep VRFs present on the uplink switch as well.
+            # Also skip VRF default since it is covered on the parent interface.
+            # ok to use like this because this is only ever called inside EosDesignsFacts
+            uplink_switch_vrfs = uplink_switch_facts.shared_utils.vrfs
+            if vrf.name == "default" or vrf.name not in uplink_switch_vrfs:
+                continue
 
-                vrf_id = self.shared_utils.get_vrf_id(vrf)
-                subinterface = EosDesignsFactsProtocol.UplinksItem.SubinterfacesItem(
-                    interface=f"{uplink_interface}.{vrf_id}",
-                    peer_interface=f"{uplink_switch_interface}.{vrf_id}",
-                    vrf=vrf.name,
-                    encapsulation_dot1q_vlan=vrf_id,
-                )
+            vrf_id = self.shared_utils.get_vrf_id(vrf)
+            subinterface = EosDesignsFactsProtocol.UplinksItem.SubinterfacesItem(
+                interface=f"{uplink_interface}.{vrf_id}",
+                peer_interface=f"{uplink_switch_interface}.{vrf_id}",
+                vrf=vrf.name,
+                encapsulation_dot1q_vlan=vrf_id,
+            )
 
-                if self.inputs.underlay_rfc5549:
-                    subinterface.ipv6_enable = True
-                elif self.shared_utils.underlay_ipv6_numbered:
-                    subinterface.ipv6_prefix_length = self.inputs.fabric_ip_addressing.p2p_uplinks.ipv6_prefix_length
-                    subinterface.ipv6_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_ipv6(uplink_index, vrf.name)
-                    subinterface.peer_ipv6_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_peer_ipv6(uplink_index, vrf.name)
-                else:
-                    subinterface.prefix_length = self.inputs.fabric_ip_addressing.p2p_uplinks.ipv4_prefix_length
-                    subinterface.ip_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_ip(uplink_index, vrf.name)
-                    subinterface.peer_ip_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_peer_ip(uplink_index, vrf.name)
+            if self.inputs.underlay_rfc5549:
+                subinterface.ipv6_enable = True
+            elif self.shared_utils.underlay_ipv6_numbered:
+                subinterface.ipv6_prefix_length = self.inputs.fabric_ip_addressing.p2p_uplinks.ipv6_prefix_length
+                subinterface.ipv6_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_ipv6(uplink_index, vrf.name)
+                subinterface.peer_ipv6_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_peer_ipv6(uplink_index, vrf.name)
+            else:
+                subinterface.prefix_length = self.inputs.fabric_ip_addressing.p2p_uplinks.ipv4_prefix_length
+                subinterface.ip_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_ip(uplink_index, vrf.name)
+                subinterface.peer_ip_address = self.shared_utils.ip_addressing.p2p_vrfs_uplinks_peer_ip(uplink_index, vrf.name)
 
-                uplink.subinterfaces.append(subinterface)
+            uplink.subinterfaces.append(subinterface)
 
         return uplink
 

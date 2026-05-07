@@ -29,13 +29,12 @@ class ArpMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                # ARP static entries are already filtered inside filtered_tenants
-                for arp_entry in vrf.static_arp_entries:
-                    arp_static_entry_item = EosCliConfigGen.Arp.StaticEntriesItem(
-                        ipv4_address=arp_entry.ipv4_address,
-                        vrf=vrf.name,
-                        mac_address=arp_entry.mac_address,
-                    )
-                    self.structured_config.arp.static_entries.append(arp_static_entry_item)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            # ARP static entries are already filtered inside filtered_tenants
+            for arp_entry in vrf.static_arp_entries:
+                arp_static_entry_item = EosCliConfigGen.Arp.StaticEntriesItem(
+                    ipv4_address=arp_entry.ipv4_address,
+                    vrf=vrf.name,
+                    mac_address=arp_entry.mac_address,
+                )
+                self.structured_config.arp.static_entries.append(arp_static_entry_item)

@@ -8,8 +8,9 @@ from typing import TYPE_CHECKING, Literal, Protocol, cast, overload
 
 from pyavd._eos_cli_config_gen.schema import EosCliConfigGen
 from pyavd._eos_designs.schema import EosDesigns
-from pyavd._errors import AristaAvdError, AristaAvdInvalidInputsError, AristaAvdMissingVariableError
-from pyavd._utils import default, unique
+from pyavd._errors import AristaAvdDuplicateDataError, AristaAvdError, AristaAvdInvalidInputsError, AristaAvdMissingVariableError
+from pyavd._schema.models.avd_indexed_list import AvdIndexedList
+from pyavd._utils import Undefined, default, unique
 from pyavd._utils.password_utils.password import ospf_message_digest_encrypt, ospf_simple_encrypt
 from pyavd.j2filters import natural_sort, range_expand
 
@@ -28,6 +29,7 @@ class FilteredTenantsMixin(Protocol):
     """
 
     resolved_l2vlan_profiles_cache: dict[str, EosDesigns.L2vlanProfilesItem] | None = None
+    _NO_CONFLICT = object()
 
     @cached_property
     def filtered_tenants(self: SharedUtilsProtocol) -> EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServices:
@@ -38,6 +40,7 @@ class FilteredTenantsMixin(Protocol):
         All sub data models like vrfs and l2vlans are also converted and filtered.
         """
         if not self.any_network_services:
+            self._filtered_network_services_vrfs = EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs()
             return EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServices()
 
         filtered_tenants = EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServices()
@@ -49,24 +52,25 @@ class FilteredTenantsMixin(Protocol):
                 tenant = original_tenant._deepcopy()
                 tenant._internal_data.context = f"{network_services_key.key}"
                 tenant.l2vlans = self.filtered_l2vlans(tenant)
-                tenant.vrfs = self.filtered_vrfs(tenant)
+                tenant.vrfs = self.filtered_vrfs_from_tenant(tenant)
                 filtered_tenants.append(tenant)
 
         no_vrf_default = all("default" not in tenant.vrfs for tenant in filtered_tenants)
         if self.is_wan_router and no_vrf_default:
-            filtered_tenants.append(
-                EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem(
-                    name="WAN_DEFAULT",
-                    vrfs=EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs(
-                        [
-                            EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem(
-                                name="default",
-                                vrf_id=1,
-                            )
-                        ]
-                    ),
-                )
+            tenant = EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem(
+                name="WAN_DEFAULT",
+                vrfs=EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs(
+                    [
+                        EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem(
+                            name="default",
+                            vrf_id=1,
+                        )
+                    ]
+                ),
             )
+            tenant._internal_data.context = "generated"
+            self._set_source_tenant(tenant.vrfs["default"], tenant)
+            filtered_tenants.append(tenant)
         elif self.is_wan_router:
             # It is enough to check only the first occurrence of default VRF as some other piece of code
             # checks that if the VRF is in multiple tenants, the configuration is consistent.
@@ -78,7 +82,173 @@ class FilteredTenantsMixin(Protocol):
                     raise AristaAvdError(msg)
                 break
 
-        return filtered_tenants._natural_sorted()
+        filtered_tenants = filtered_tenants._natural_sorted()
+        self._filtered_network_services_vrfs = self._combine_filtered_vrfs(filtered_tenants)
+        return filtered_tenants
+
+    @cached_property
+    def filtered_network_services_vrfs(self: SharedUtilsProtocol) -> EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs:
+        """
+        Return a combined list of filtered VRFs across all accepted tenants.
+
+        Duplicate VRF names are combined after all per-node filtering has been applied. Conflicting duplicate
+        objects are raised here, before structured config generation starts consuming the VRF data.
+        """
+        if not hasattr(self, "_filtered_network_services_vrfs"):
+            _ = self.filtered_tenants
+
+        return self._filtered_network_services_vrfs
+
+    def _combine_filtered_vrfs(
+        self: SharedUtilsProtocol, filtered_tenants: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServices
+    ) -> EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs:
+        """Combine filtered VRFs by name across tenants and track source tenants."""
+        combined_vrfs = EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs()
+
+        for tenant in filtered_tenants:
+            for vrf in tenant.vrfs:
+                if vrf.name not in combined_vrfs:
+                    combined_vrfs.append(vrf)
+                    continue
+
+                existing_vrf = combined_vrfs[vrf.name]
+                existing_vrf_for_combine = existing_vrf._deepcopy()
+                vrf_for_combine = vrf._deepcopy()
+                self._normalize_vrf_id_vni_for_combine(existing_vrf_for_combine)
+                self._normalize_vrf_id_vni_for_combine(vrf_for_combine)
+                try:
+                    existing_vrf_for_combine._combine(vrf_for_combine)
+                except AristaAvdDuplicateDataError as error:
+                    context = f"Network Services VRF '{vrf.name}' across tenants"
+                    raise AristaAvdDuplicateDataError(
+                        context,
+                        str(self._get_vrf_conflict_context(existing_vrf_for_combine, vrf_for_combine, existing_vrf)),
+                        str(self._get_vrf_conflict_context(vrf_for_combine, existing_vrf_for_combine, vrf)),
+                    ) from error
+
+                existing_vrf._combine(vrf)
+                self._update_source_tenants(existing_vrf, vrf)
+
+        return combined_vrfs
+
+    @staticmethod
+    def _normalize_vrf_id_vni_for_combine(vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem) -> None:
+        """Normalize vrf_id and vrf_vni aliases only for duplicate VRF conflict detection."""
+        vrf.vrf_id = default(vrf.vrf_id, vrf.vrf_vni)
+        vrf.vrf_vni = default(vrf.vrf_vni, vrf.vrf_id)
+
+    def _get_vrf_conflict_context(
+        self: SharedUtilsProtocol,
+        vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem,
+        other_vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem,
+        source_vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem,
+    ) -> dict[str, Any]:
+        """Return stable, concise context for duplicate VRF setting conflicts."""
+        conflicting_data, _ = self._get_conflicting_data(vrf, other_vrf)
+        return {
+            "name": vrf.name,
+            "source_tenants": self.get_source_tenant_names(source_vrf),
+            "conflicting_data": conflicting_data,
+        }
+
+    @staticmethod
+    def _get_conflicting_data(data: Any, other_data: Any) -> tuple[Any, Any]:
+        """Return the first conflicting values according to AvdModel combine semantics."""
+        if not hasattr(data, "_dump") or not isinstance(other_data, type(data)):
+            return data, other_data
+
+        if isinstance(data, AvdIndexedList):
+            for primary_key, new_item in data.items():
+                if primary_key not in other_data:
+                    continue
+
+                existing_item = other_data[primary_key]
+                if new_item._compare(existing_item):
+                    continue
+
+                new_conflict, existing_conflict = FilteredTenantsMixin._get_conflicting_data(new_item, existing_item)
+                primary_key_field = data._primary_key
+                if isinstance(new_conflict, dict):
+                    new_conflict = {primary_key_field: primary_key, **new_conflict}
+                if isinstance(existing_conflict, dict):
+                    existing_conflict = {primary_key_field: primary_key, **existing_conflict}
+
+                return [new_conflict], [existing_conflict]
+
+            return FilteredTenantsMixin._NO_CONFLICT, FilteredTenantsMixin._NO_CONFLICT
+
+        if not hasattr(data, "items"):
+            return FilteredTenantsMixin._NO_CONFLICT, FilteredTenantsMixin._NO_CONFLICT
+
+        for field, new_value in data.items():
+            existing_value = other_data._get_defined_attr(field)
+            if existing_value is Undefined:
+                continue
+
+            if hasattr(new_value, "_dump") and isinstance(existing_value, type(new_value)):
+                if new_value == existing_value:
+                    continue
+
+                new_conflict, existing_conflict = FilteredTenantsMixin._get_conflicting_data(new_value, existing_value)
+                if new_conflict is FilteredTenantsMixin._NO_CONFLICT:
+                    continue
+
+                return {field: new_conflict}, {field: existing_conflict}
+
+            if new_value == existing_value:
+                continue
+
+            return {field: new_value}, {field: existing_value}
+
+        return data._dump(), other_data._dump()
+
+    def _set_source_tenant(
+        self: SharedUtilsProtocol,
+        item: Any,
+        tenant: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem,
+    ) -> None:
+        """Set source tenant context on a filtered network-services item."""
+        item._internal_data.tenant = tenant
+
+    def _update_source_tenants(self: SharedUtilsProtocol, existing_item: Any, new_item: Any) -> None:
+        """Update source tenant context after a successful combine."""
+        existing_source_tenants = self.get_source_tenant_names(existing_item)
+        for tenant_name in self.get_source_tenant_names(new_item):
+            if tenant_name not in existing_source_tenants:
+                existing_source_tenants.append(tenant_name)
+
+        if not existing_source_tenants:
+            return
+
+        existing_item._internal_data.source_tenants = existing_source_tenants
+
+        for field, new_value in new_item.items():
+            if not isinstance(new_value, AvdIndexedList):
+                continue
+
+            existing_value = existing_item._get_defined_attr(field)
+            if not isinstance(existing_value, type(new_value)):
+                continue
+
+            for primary_key, new_nested_item in new_value.items():
+                if primary_key in existing_value:
+                    self._update_source_tenants(existing_value[primary_key], new_nested_item)
+
+    @staticmethod
+    def get_source_tenant(item: Any) -> EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem:
+        """Return the primary source tenant for a filtered network-services item."""
+        return item._internal_data.tenant
+
+    @staticmethod
+    def get_source_tenant_names(item: Any) -> list[str]:
+        """Return all source tenant names for a filtered network-services item."""
+        if source_tenants := getattr(item._internal_data, "source_tenants", None):
+            return source_tenants
+
+        if tenant := getattr(item._internal_data, "tenant", None):
+            return [tenant.name]
+
+        return []
 
     def filtered_l2vlans(
         self: SharedUtilsProtocol, tenant: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem
@@ -246,7 +416,7 @@ class FilteredTenantsMixin(Protocol):
 
         return vrf.name in self.switch_facts.uplink_switch_vrfs
 
-    def filtered_vrfs(
+    def filtered_vrfs_from_tenant(
         self: SharedUtilsProtocol, tenant: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem
     ) -> EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.Vrfs:
         """
@@ -261,6 +431,7 @@ class FilteredTenantsMixin(Protocol):
             if not self.is_accepted_vrf(vrf):
                 continue
 
+            self._set_source_tenant(vrf, tenant)
             vrf.bgp_peers = vrf.bgp_peers._filtered(lambda bgp_peer: self.match_regexes(bgp_peer.nodes, self.hostname))._natural_sorted(sort_key="ip_address")
             vrf.static_routes = vrf.static_routes._filtered(lambda route: not route.nodes or self.hostname in route.nodes)
             vrf.ipv6_static_routes = vrf.ipv6_static_routes._filtered(lambda route: not route.nodes or self.hostname in route.nodes)
@@ -306,6 +477,19 @@ class FilteredTenantsMixin(Protocol):
                                 break
 
             vrf.additional_route_targets = vrf.additional_route_targets._filtered(lambda rt: bool(not rt.nodes or self.hostname in rt.nodes))
+            for attr in (
+                "bgp_peers",
+                "static_routes",
+                "ipv6_static_routes",
+                "static_arp_entries",
+                "l3_interfaces",
+                "l3_port_channels",
+                "loopbacks",
+                "aggregate_addresses",
+                "additional_route_targets",
+            ):
+                for item in getattr(vrf, attr):
+                    self._set_source_tenant(item, tenant)
 
             if vrf.svis or vrf.l3_interfaces or vrf.loopbacks or vrf.l3_port_channels or self.is_forced_vrf(vrf, tenant.name):
                 filtered_vrfs.append(vrf)
@@ -385,6 +569,13 @@ class FilteredTenantsMixin(Protocol):
                 continue
 
             merged_svi.evpn_vlan_bundle = default(merged_svi.evpn_vlan_bundle, vrf.evpn_vlan_bundle, tenant.evpn_vlan_bundle)
+            merged_svi.igmp_snooping.querier.enabled = default(
+                merged_svi.igmp_snooping.querier.enabled,
+                merged_svi.igmp_snooping_querier.enabled,
+                tenant.igmp_snooping.querier.enabled,
+                tenant.igmp_snooping_querier.enabled,
+            )
+            self._set_source_tenant(merged_svi, tenant)
 
             filtered_svis.append(merged_svi)
 
@@ -419,6 +610,7 @@ class FilteredTenantsMixin(Protocol):
                 vrf.ipv6_static_routes.extend(
                     l3_interface.ipv6_static_routes._cast_as(EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem.Ipv6StaticRoutes)
                 )
+            self._set_source_tenant(l3_interface, self.get_source_tenant(vrf))
             filtered_l3_interfaces.append(l3_interface)
 
         return filtered_l3_interfaces
@@ -445,6 +637,7 @@ class FilteredTenantsMixin(Protocol):
                         EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem.Ipv6StaticRoutes
                     )
                 )
+            self._set_source_tenant(l3_port_channel, self.get_source_tenant(vrf))
             filtered_l3_port_channels.append(l3_port_channel)
 
         return filtered_l3_port_channels
@@ -490,7 +683,7 @@ class FilteredTenantsMixin(Protocol):
         if not self.network_services_l3:
             return []
 
-        return natural_sort({vrf.name for tenant in self.filtered_tenants for vrf in tenant.vrfs})
+        return natural_sort({vrf.name for vrf in self.filtered_network_services_vrfs})
 
     def get_additional_svi_config(
         self: SharedUtilsProtocol,
@@ -661,7 +854,7 @@ class FilteredTenantsMixin(Protocol):
         if not self.network_services_l3:
             return False
 
-        return any(self.bgp_enabled_for_vrf(vrf) for tenant in self.filtered_tenants for vrf in tenant.vrfs)
+        return any(self.bgp_enabled_for_vrf(vrf) for vrf in self.filtered_network_services_vrfs)
 
     def bgp_enabled_for_vrf(self: SharedUtilsProtocol, vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem) -> bool:
         """

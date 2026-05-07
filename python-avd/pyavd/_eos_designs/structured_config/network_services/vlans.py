@@ -39,9 +39,14 @@ class VlansMixin(Protocol):
 
         all_primary_vlans: set[int] = set()
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for svi in vrf.svis:
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
+
+                for svi in [svi for svi in vrf.svis if self.shared_utils.get_source_tenant(svi) is tenant]:
                     self.structured_config.vlans.append(self._get_vlan_config(svi, tenant), ignore_fields=("metadata",))
+
+                if self.shared_utils.get_source_tenant(vrf) is not tenant:
+                    continue
 
                 # MLAG IBGP Peering VLANs per VRF
                 # Continue to next VRF if mlag vlan_id is not set
@@ -53,14 +58,16 @@ class VlansMixin(Protocol):
                     name=AvdStringFormatter().format(self.inputs.mlag_peer_l3_vrf_vlan_name, mlag_peer=self.shared_utils.mlag_peer, vlan=vlan_id, vrf=vrf.name),
                     trunk_groups=EosCliConfigGen.VlansItem.TrunkGroups([self.inputs.trunk_groups.mlag_l3.name]),
                 )
-                vlan.metadata.tenants.append(tenant.name)
+                for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+                    vlan.metadata.tenants.append(tenant_name)
                 self.structured_config.vlans.append(vlan, ignore_fields=("metadata",))
 
                 # If the VLAN already existed (shared VRF across multiple tenants),
                 # append this tenant to the existing item's metadata.
                 existing_vlan = self.structured_config.vlans.obtain(vlan_id)
-                if tenant.name not in existing_vlan.metadata.tenants:
-                    existing_vlan.metadata.tenants.append(tenant.name)
+                for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+                    if tenant_name not in existing_vlan.metadata.tenants:
+                        existing_vlan.metadata.tenants.append(tenant_name)
 
             # L2 Vlans per Tenant
             for l2vlan in tenant.l2vlans:
@@ -103,7 +110,8 @@ class VlansMixin(Protocol):
             id=vlan.id,
             name=vlan.name,
         )
-        vlans_vlan.metadata.tenants.append(tenant.name)
+        for tenant_name in self.shared_utils.get_source_tenant_names(vlan) or [tenant.name]:
+            vlans_vlan.metadata.tenants.append(tenant_name)
         if vlan.address_locking.ipv4:
             if self.inputs.address_locking_settings.dhcp_servers_ipv4 or self.inputs.address_locking_settings.locked_address.ipv4_enforcement_disabled:
                 vlans_vlan.address_locking.address_family.ipv4 = vlan.address_locking.ipv4

@@ -137,22 +137,22 @@ class MonitorSessionsMixin(Protocol):
                     per_interface_monitor_session._internal_data.context = network_port._internal_data.context
                     monitor_session_configs.append(per_interface_monitor_session)
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for l3_interface_index, l3_interface in enumerate(vrf.l3_interfaces):
-                    for node_index, node_name in enumerate(l3_interface.nodes):
-                        if node_name != self.shared_utils.hostname:
-                            continue
-                        for monitor_session in l3_interface.monitor_sessions:
-                            # We merge using the adapter datamodel to catch conflicts in direction.
-                            per_interface_monitor_session = monitor_session._deepcopy()._cast_as(
-                                EosDesigns._DynamicKeys.DynamicConnectedEndpointsItem.ConnectedEndpointsItem.AdaptersItem.MonitorSessionsItem
-                            )
-                            per_interface_monitor_session._internal_data.interface = l3_interface.interfaces[node_index]
-                            per_interface_monitor_session._internal_data.context = (
-                                f"{tenant._internal_data.context}[name={tenant.name}].vrfs[name={vrf.name}].l3_interfaces[{l3_interface_index}]"
-                            )
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            for l3_interface_index, l3_interface in enumerate(vrf.l3_interfaces):
+                tenant = self.shared_utils.get_source_tenant(l3_interface)
+                for node_index, node_name in enumerate(l3_interface.nodes):
+                    if node_name != self.shared_utils.hostname:
+                        continue
+                    for monitor_session in l3_interface.monitor_sessions:
+                        # We merge using the adapter datamodel to catch conflicts in direction.
+                        per_interface_monitor_session = monitor_session._deepcopy()._cast_as(
+                            EosDesigns._DynamicKeys.DynamicConnectedEndpointsItem.ConnectedEndpointsItem.AdaptersItem.MonitorSessionsItem
+                        )
+                        per_interface_monitor_session._internal_data.interface = l3_interface.interfaces[node_index]
+                        per_interface_monitor_session._internal_data.context = (
+                            f"{tenant._internal_data.context}[name={tenant.name}].vrfs[name={vrf.name}].l3_interfaces[{l3_interface_index}]"
+                        )
 
-                            monitor_session_configs.append(per_interface_monitor_session)
+                        monitor_session_configs.append(per_interface_monitor_session)
 
         return monitor_session_configs

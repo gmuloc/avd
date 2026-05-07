@@ -29,13 +29,13 @@ class StandardAccessListsMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for rp_entry in vrf.pim_rp_addresses or tenant.pim_rp_addresses:
-                    if (rp_entry.nodes and self.shared_utils.hostname not in rp_entry.nodes) or not rp_entry.groups or not rp_entry.access_list_name:
-                        continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            tenant = self.shared_utils.get_source_tenant(vrf)
+            for rp_entry in vrf.pim_rp_addresses or tenant.pim_rp_addresses:
+                if (rp_entry.nodes and self.shared_utils.hostname not in rp_entry.nodes) or not rp_entry.groups or not rp_entry.access_list_name:
+                    continue
 
-                    standard_access_list = EosCliConfigGen.StandardAccessListsItem(name=rp_entry.access_list_name)
-                    for index, group in enumerate(rp_entry.groups, 1):
-                        standard_access_list.entries.append_new(sequence=(index) * 10, action="permit", source=group)
-                    self.structured_config.standard_access_lists.append(standard_access_list)
+                standard_access_list = EosCliConfigGen.StandardAccessListsItem(name=rp_entry.access_list_name)
+                for index, group in enumerate(rp_entry.groups, 1):
+                    standard_access_list.entries.append_new(sequence=(index) * 10, action="permit", source=group)
+                self.structured_config.standard_access_lists.append(standard_access_list)

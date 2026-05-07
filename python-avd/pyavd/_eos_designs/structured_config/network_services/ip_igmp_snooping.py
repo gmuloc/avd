@@ -36,8 +36,9 @@ class IpIgmpSnoopingMixin(Protocol):
             return
 
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for svi in vrf.svis:
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
+                for svi in [svi for svi in vrf.svis if self.shared_utils.get_source_tenant(svi) is tenant]:
                     self._set_ip_igmp_snooping_vlan(svi, tenant, vrf)
 
             for l2vlan in tenant.l2vlans:

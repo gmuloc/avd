@@ -24,5 +24,4 @@ class StructCfgsMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            self.custom_structured_configs.root.extend(vrf.structured_config for vrf in tenant.vrfs if vrf.structured_config)
+        self.custom_structured_configs.root.extend(vrf.structured_config for vrf in self.shared_utils.filtered_network_services_vrfs if vrf.structured_config)

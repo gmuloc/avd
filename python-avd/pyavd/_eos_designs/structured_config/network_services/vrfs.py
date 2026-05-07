@@ -34,32 +34,34 @@ class VrfsMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                vrf_name = vrf.name
-                if vrf_name == "default":
-                    continue
-                new_vrf = EosCliConfigGen.VrfsItem(name=vrf_name)
-                new_vrf.metadata.tenants.append(tenant.name)
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            tenant = self.shared_utils.get_source_tenant(vrf)
+            vrf_name = vrf.name
+            if vrf_name == "default":
+                continue
+            new_vrf = EosCliConfigGen.VrfsItem(name=vrf_name)
+            for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+                new_vrf.metadata.tenants.append(tenant_name)
 
-                # MLAG IBGP Peering VLANs per VRF
-                if self.inputs.overlay_mlag_rfc5549 and self._mlag_ibgp_peering_enabled(vrf, tenant):
-                    new_vrf._update(ip_routing_ipv6_interfaces=True, ipv6_routing=True)
-                else:
-                    new_vrf.ip_routing = True
+            # MLAG IBGP Peering VLANs per VRF
+            if self.inputs.overlay_mlag_rfc5549 and self._mlag_ibgp_peering_enabled(vrf, tenant):
+                new_vrf._update(ip_routing_ipv6_interfaces=True, ipv6_routing=True)
+            else:
+                new_vrf.ip_routing = True
 
-                if self._has_ipv6(vrf):
-                    new_vrf.ipv6_routing = True
+            if self._has_ipv6(vrf):
+                new_vrf.ipv6_routing = True
 
-                if vrf.description:
-                    new_vrf.description = vrf.description
-                self.structured_config.vrfs.append(new_vrf, ignore_fields=("metadata",))
+            if vrf.description:
+                new_vrf.description = vrf.description
+            self.structured_config.vrfs.append(new_vrf, ignore_fields=("metadata",))
 
-                # If the VRF already existed (shared VRF across multiple tenants),
-                # append this tenant to the existing item's metadata.
-                existing_vrf = self.structured_config.vrfs.obtain(vrf_name)
-                if tenant.name not in existing_vrf.metadata.tenants:
-                    existing_vrf.metadata.tenants.append(tenant.name)
+            # If the VRF already existed (shared VRF across multiple tenants),
+            # append this tenant to the existing item's metadata.
+            existing_vrf = self.structured_config.vrfs.obtain(vrf_name)
+            for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+                if tenant_name not in existing_vrf.metadata.tenants:
+                    existing_vrf.metadata.tenants.append(tenant_name)
 
     def _has_ipv6(
         self: AvdStructuredConfigNetworkServicesProtocol, vrf: EosDesigns._DynamicKeys.DynamicNetworkServicesItem.NetworkServicesItem.VrfsItem

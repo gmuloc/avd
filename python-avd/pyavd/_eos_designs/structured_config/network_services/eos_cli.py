@@ -32,7 +32,7 @@ class EosCliMixin(Protocol):
         elif hasattr(self, "_complete_structured_config") and self._complete_structured_config.eos_cli is not None:
             eos_clis.append(self._complete_structured_config.eos_cli)
 
-        eos_clis.extend(vrf.raw_eos_cli for tenant in self.shared_utils.filtered_tenants for vrf in tenant.vrfs if vrf.raw_eos_cli is not None)
+        eos_clis.extend(vrf.raw_eos_cli for vrf in self.shared_utils.filtered_network_services_vrfs if vrf.raw_eos_cli is not None)
 
         if eos_clis:
             self.structured_config.eos_cli = "\n".join(eos_clis)

@@ -35,9 +35,13 @@ class VlanInterfacesMixin(Protocol):
             return
 
         for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for svi in vrf.svis:
+            for tenant_vrf in tenant.vrfs:
+                vrf = self.shared_utils.filtered_network_services_vrfs[tenant_vrf.name]
+                for svi in [svi for svi in vrf.svis if self.shared_utils.get_source_tenant(svi) is tenant]:
                     self.structured_config.vlan_interfaces.append(self._get_vlan_interface_config_for_svi(svi, vrf, tenant), ignore_fields=("metadata",))
+
+                if self.shared_utils.get_source_tenant(vrf) is not tenant:
+                    continue
 
                 # MLAG IBGP Peering VLANs per VRF
                 # Continue to next VRF if mlag vlan_id is not set
@@ -50,8 +54,9 @@ class VlanInterfacesMixin(Protocol):
                 # If the VLAN interface already existed (shared VRF across multiple tenants),
                 # append this tenant to the existing item's metadata.
                 existing_vlan_interface = self.structured_config.vlan_interfaces.obtain(f"Vlan{vlan_id}")
-                if tenant.name not in existing_vlan_interface.metadata.tenants:
-                    existing_vlan_interface.metadata.tenants.append(tenant.name)
+                for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+                    if tenant_name not in existing_vlan_interface.metadata.tenants:
+                        existing_vlan_interface.metadata.tenants.append(tenant_name)
 
     def _check_virtual_router_mac_address(self: AvdStructuredConfigNetworkServicesProtocol, variable: str) -> None:
         """Raise if virtual router mac address is required but missing, otherwise return None."""
@@ -87,7 +92,8 @@ class VlanInterfacesMixin(Protocol):
         )
         if svi.ipv6_address:
             vlan_interface_config.ipv6_addresses.append(svi.ipv6_address)
-        vlan_interface_config.metadata.tenants.append(tenant.name)
+        for tenant_name in self.shared_utils.get_source_tenant_names(svi) or [tenant.name]:
+            vlan_interface_config.metadata.tenants.append(tenant_name)
         # Historic behavior is to not output the default ["all"]
         vlan_interface_config.metadata.tags = EosCliConfigGen.VlanInterfacesItem.Metadata.Tags(svi._get("tags", []))
 
@@ -217,7 +223,8 @@ class VlanInterfacesMixin(Protocol):
             vrf=vrf.name,
             mtu=self.shared_utils.get_interface_mtu(f"Vlan{vlan_id}", self.shared_utils.p2p_uplinks_mtu),
         )
-        vlan_interface_config.metadata.tenants.append(tenant.name)
+        for tenant_name in self.shared_utils.get_source_tenant_names(vrf) or [tenant.name]:
+            vlan_interface_config.metadata.tenants.append(tenant_name)
         vlan_interface_config.metadata.type = "underlay_peering"
 
         if self.inputs.underlay_rfc5549 and self.inputs.overlay_mlag_rfc5549:

@@ -199,14 +199,13 @@ class UtilsMixin(Protocol):
         # Routed interface with no config unless there is an SVI matching the native-vlan, then it will contain the config for that SVI
 
         interfaces = EosCliConfigGen.EthernetInterfaces()
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                for svi in vrf.svis:
-                    # Skip any vlans not part of the link
-                    if svi.id not in vlans:
-                        continue
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            for svi in vrf.svis:
+                # Skip any vlans not part of the link
+                if svi.id not in vlans:
+                    continue
 
-                    interfaces.append(self._get_l2_as_subint(link, svi, vrf, tenant))
+                interfaces.append(self._get_l2_as_subint(link, svi, vrf, self.shared_utils.get_source_tenant(svi)))
 
         # If we have the main interface covered, we can just remove it from the list and return as main interface.
         # Otherwise we return an almost empty dict as the main interface since it was already covered by the calling function.

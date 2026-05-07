@@ -29,7 +29,6 @@ class RouterMulticastMixin(Protocol):
         if not self.shared_utils.network_services_l3:
             return
 
-        for tenant in self.shared_utils.filtered_tenants:
-            for vrf in tenant.vrfs:
-                if getattr(vrf._internal_data, "evpn_l3_multicast_enabled", False):
-                    self.structured_config.router_multicast.vrfs.append_new(name=vrf.name, ipv4=EosCliConfigGen.RouterMulticast.VrfsItem.Ipv4(routing=True))
+        for vrf in self.shared_utils.filtered_network_services_vrfs:
+            if getattr(vrf._internal_data, "evpn_l3_multicast_enabled", False):
+                self.structured_config.router_multicast.vrfs.append_new(name=vrf.name, ipv4=EosCliConfigGen.RouterMulticast.VrfsItem.Ipv4(routing=True))
