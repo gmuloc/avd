@@ -145,7 +145,7 @@ jobs:
           pip install --group dev --upgrade
       - name: PyRight static type checker
         # Specific SHA as allowed by github org admins
-        uses: jakebailey/pyright-action@6cabc0f01c4994be48fd45cd9dbacdd6e1ee6e5e
+        uses: jakebailey/pyright-action@05c6c25338ac3a97d25e8014f5333a4d87065158
 
   # ----------------------------------- #
   # Test Requirements
