@@ -786,8 +786,8 @@ jobs:
         with:
           name: pytest-coverage
           path: coverage.xml
-               
-    codecov:
+
+  codecov:
     name: Upload coverage to codecov
     needs:
       - ansible_test_units
@@ -803,4 +803,3 @@ jobs:
     name: PR Benchmarks
     uses: ./.github/workflows/benchmarks-pr.yml
     secrets: inherit
-
