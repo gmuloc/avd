@@ -946,6 +946,9 @@ router_multicast:
   - name: TEN_D_L3_MULTICAST_ENABLED_140_DISABLED_141
     ipv4:
       routing: true
+  - name: default
+    ipv4:
+      routing: true
   - name: TEN_E_L3_MULTICAST_ENABLED_PEG_OVERRIDE
     ipv4:
       routing: true
@@ -960,6 +963,12 @@ router_multicast:
       routing: true
 router_pim_sparse_mode:
   vrfs:
+  - name: default
+    ipv4:
+      rp_addresses:
+      - address: 10.1.53.130
+        access_lists:
+        - RP_ACL_VRF_DEFAULT_RESERVED
   - name: TEN_E_L3_MULTICAST_ENABLED_PEG_OVERRIDE
     ipv4:
       rp_addresses:
@@ -1006,6 +1015,11 @@ sflow:
 spanning_tree:
   no_spanning_tree_vlan: 4093-4094
 standard_access_lists:
+- name: RP_ACL_VRF_DEFAULT_RESERVED
+  entries:
+  - sequence: 10
+    action: permit
+    source: 232.0.144.0/21
 - name: RP_ACL_VRF_OVERRIDE
   entries:
   - sequence: 10

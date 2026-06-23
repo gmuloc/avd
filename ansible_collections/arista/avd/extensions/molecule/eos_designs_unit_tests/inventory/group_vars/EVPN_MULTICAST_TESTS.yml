@@ -462,6 +462,24 @@ tenants:
             enabled: true
             ip_address_virtual: 10.1.25.1/24
 
+  # Demonstrates current rendering for a VTEP using network_services VRF "default".
+  # EOS rejects the generated CLI with "% vrf name default is reserved."
+  - name: Tenant_Default_RP
+    evpn_l3_multicast:
+      enabled: true
+      evpn_underlay_l3_multicast_group_ipv4_pool: 232.0.144.0/24
+    vrfs:
+      - name: default
+        vrf_id: 100
+        address_families: []
+        pim_rp_addresses:
+          - nodes: [evpn-multicast-l3leaf1a]
+            rps:
+              - 10.1.53.130
+            groups:
+              - 232.0.144.0/21
+            access_list_name: RP_ACL_VRF_DEFAULT_RESERVED
+
   # EVPN Multicast L3/IRB/OISM
   # Tenant_E is for testing of EVPN L3/OISM with PEG/Transit only
   - name: Tenant_E

@@ -29,6 +29,8 @@ l3leaf:
           id: 1
           mgmt_ip: 192.168.200.105/24
           uplink_switch_interfaces: [Ethernet1]
+          filter:
+            always_include_vrfs_in_tenants: [Tenant_Default_RP]
         - name: evpn-multicast-l3leaf1b
           id: 2
           mgmt_ip: 192.168.200.106/24
