@@ -552,12 +552,9 @@ jobs:
               3.12
               3.13
               3.14
-            integration_args: ""
           - ansible_version: ansible_core_2_18
             pip_installation: "ansible-core>=2.18.0,<2.19.0"
             python_version: "3.11"
-            # TODO: Remove this exclusion once AVDActionPlugin stores log warnings in result["warnings"] for ansible-core <2.19.
-            integration_args: "--exclude eos_designs_documentation"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -572,7 +569,7 @@ jobs:
       - name: Run ansible-test integration test cases
         working-directory: ansible_collections/arista/avd
         run: |
-          ansible-test integration --coverage --requirements -vv ${{ matrix.integration_args }}
+          ansible-test integration --coverage --requirements -vv
           ansible-test coverage xml
           mv tests/output/reports/coverage.xml "./integration-coverage-${{ matrix.ansible_version }}.xml"
       - name: Upload coverage from ansible-test integration

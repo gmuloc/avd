@@ -325,9 +325,8 @@ class TestAVDActionPlugin:
                 # Assert that the sticky handler is NOT present during execution
                 assert sticky_handler not in self.logger.handlers
 
-                # Assert that the plugin default handler is the only one present
-                assert len(self.logger.handlers) == 1
-                assert isinstance(self.logger.handlers[0], AnsibleDisplayHandler)
+                # Assert that the plugin default display handler is present
+                assert any(isinstance(handler, AnsibleDisplayHandler) for handler in self.logger.handlers)
 
         # Create a "sticky" handler and add it to the AVD logger BEFORE the test
         logger = logging.getLogger("ansible_collections.arista.avd")

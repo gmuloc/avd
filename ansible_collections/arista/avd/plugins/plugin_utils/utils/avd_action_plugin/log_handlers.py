@@ -44,6 +44,25 @@ class AnsibleDisplayHandler(logging.Handler):
             self.display.vvv(message)
 
 
+class LegacyResultHandler(logging.Handler):
+    """A handler that preserves warning and error result behavior for ansible-core <2.19."""
+
+    def __init__(self, result_dict: dict[str, Any]) -> None:
+        """Initialize the handler."""
+        super().__init__()
+        self.result = result_dict
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Save formatted warning and error messages to the result dictionary."""
+        message = self.format(record)
+        if record.levelno >= logging.ERROR:
+            self.result.setdefault("stderr_lines", []).append(message)
+            self.result["stderr"] = self.result.setdefault("stderr", "") + f"{message!s}\n"
+            self.result["failed"] = True
+        elif record.levelno >= logging.WARNING:
+            self.result.setdefault("warnings", []).append(message)
+
+
 class SaveToResultHandler(logging.Handler):
     """A handler that saves warning and error logs to the Ansible result dictionary."""
 

@@ -10,10 +10,11 @@ from typing import Any, ClassVar, final
 
 from ansible.plugins.action import ActionBase
 
+from ansible_collections.arista.avd.plugins.plugin_utils.constants import ANSIBLE_ABOVE_2_19
 from ansible_collections.arista.avd.plugins.plugin_utils.utils.raise_action_fail import raise_action_fail
 
 from .log_config import AVDLoggingConfig, LoggerState, get_avd_log_level
-from .log_handlers import AnsibleDisplayHandler, ContextFilter, SaveToResultHandler
+from .log_handlers import AnsibleDisplayHandler, ContextFilter, LegacyResultHandler, SaveToResultHandler
 
 
 class AVDActionPlugin(ActionBase):
@@ -57,6 +58,8 @@ class AVDActionPlugin(ActionBase):
 
         # Prepare handlers, filters, and format based on logging config and task arguments
         temp_handlers: list[logging.Handler] = []
+        if not ANSIBLE_ABOVE_2_19:
+            temp_handlers.append(LegacyResultHandler(result_dict=self.result))
         if self._task.args.get("save_logs", False):
             temp_handlers.append(SaveToResultHandler(result_dict=self.result))
         if self._task.args.get("live_display", True):
