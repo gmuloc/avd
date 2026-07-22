@@ -271,7 +271,7 @@ class AvdIndexedList(Sequence[T_AvdModel], AvdBase, Generic[T_PrimaryKey, T_AvdM
             # Existing item, so deepinherit.
             self[primary_key]._deepinherit(new_item)
 
-    def _cast_as(self, new_type: type[T_AvdIndexedList], ignore_extra_keys: bool = False) -> T_AvdIndexedList:
+    def _cast_as(self, new_type: type[T_AvdIndexedList], ignore_extra_keys: bool = False, *, include_default_values: bool = False) -> T_AvdIndexedList:
         """
         Recast a class instance as another AvdIndexedList subclass if they are compatible.
 
@@ -284,7 +284,9 @@ class AvdIndexedList(Sequence[T_AvdModel], AvdBase, Generic[T_PrimaryKey, T_AvdM
             msg = f"Unable to cast '{cls}' as type '{new_type}' since '{new_type}' is not an AvdIndexedList subclass."
             raise TypeError(msg)
 
-        new_instance = new_type([item._cast_as(new_type._item_type, ignore_extra_keys=ignore_extra_keys) for item in self])
+        new_instance = new_type(
+            [item._cast_as(new_type._item_type, ignore_extra_keys=ignore_extra_keys, include_default_values=include_default_values) for item in self]
+        )
 
         # Pass along the internal flags
         new_instance._created_from_null = self._created_from_null

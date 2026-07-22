@@ -388,7 +388,22 @@ class AvdModel(AvdBase):  # noqa: PLW1641 - __hash__ will be set to None.
         new_instance._deepinherit(other=other)
         return new_instance
 
-    def _cast_as(self, new_type: type[T_AvdModel], ignore_extra_keys: bool = False) -> T_AvdModel:
+    @staticmethod
+    def _cast_field_info_is_compatible(field_info: dict, new_field_info: dict) -> bool:
+        """Return True if field info is compatible for casting, ignoring default value metadata."""
+        if field_info == new_field_info:
+            return True
+
+        field_info_without_default = {key: value for key, value in field_info.items() if key != "default"}
+        new_field_info_without_default = {key: value for key, value in new_field_info.items() if key != "default"}
+        return field_info_without_default == new_field_info_without_default
+
+    @staticmethod
+    def _cast_field_type_is_avd_base(field_type: type) -> bool:
+        """Return True if the field type is an AvdBase subclass."""
+        return field_type is not Any and issubclass(field_type, AvdBase)
+
+    def _cast_as(self, new_type: type[T_AvdModel], ignore_extra_keys: bool = False, *, include_default_values: bool = False) -> T_AvdModel:
         """
         Recast a class instance as another AvdModel subclass if they are compatible.
 
@@ -402,27 +417,45 @@ class AvdModel(AvdBase):  # noqa: PLW1641 - __hash__ will be set to None.
             msg = f"Unable to cast '{cls}' as type '{new_type}' since '{new_type}' is not an AvdModel subclass."
             raise TypeError(msg)
 
-        new_args = {}
-        for field, value in self.items():
+        def get_cast_value(field: str, value: Any) -> Any:
             if field not in new_type._fields:
                 if ignore_extra_keys:
-                    continue
+                    return Undefined
                 msg = f"Unable to cast '{cls}' as type '{new_type}' since the field '{field}' is missing from the new class. "
                 raise TypeError(msg)
 
             field_info = self._fields[field]
-            if field_info != new_type._fields[field]:
-                if issubclass(field_info["type"], AvdBase):
-                    # TODO: Consider using the TypeError we raise below to ensure we know the outer type.
-                    # TODO: with suppress(TypeError):
+            if self._cast_field_info_is_compatible(field_info, new_type._fields[field]):
+                if include_default_values and self._cast_field_type_is_avd_base(field_info["type"]):
                     value = cast("AvdBase", value)
-                    new_args[field] = value._cast_as(new_type._fields[field]["type"], ignore_extra_keys=ignore_extra_keys)
+                    return value._cast_as(new_type._fields[field]["type"], ignore_extra_keys=ignore_extra_keys, include_default_values=include_default_values)
+
+                return value
+
+            if self._cast_field_type_is_avd_base(field_info["type"]):
+                # TODO: Consider using the TypeError we raise below to ensure we know the outer type.
+                # TODO: with suppress(TypeError):
+                value = cast("AvdBase", value)
+                return value._cast_as(new_type._fields[field]["type"], ignore_extra_keys=ignore_extra_keys, include_default_values=include_default_values)
+
+            msg = f"Unable to cast '{cls}' as type '{new_type}' since the field '{field}' is incompatible. Value {value}"
+            raise TypeError(msg)
+
+        new_args = {}
+        for field, value in self.items():
+            if (cast_value := get_cast_value(field, value)) is not Undefined:
+                new_args[field] = cast_value
+
+        if include_default_values and not self._created_from_null:
+            for field, field_info in self._fields.items():
+                if field in self.__dict__ or "default" not in field_info:
+                    continue
+                if field not in new_type._fields and ignore_extra_keys:
                     continue
 
-                msg = f"Unable to cast '{cls}' as type '{new_type}' since the field '{field}' is incompatible. Value {value}"
-                raise TypeError(msg)
-
-            new_args[field] = value
+                default_value = self._get_field_default_value(field)
+                if (cast_value := get_cast_value(field, default_value)) is not Undefined:
+                    new_args[field] = cast_value
 
         new_instance = new_type(**new_args)
 

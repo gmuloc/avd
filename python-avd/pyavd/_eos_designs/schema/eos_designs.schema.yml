@@ -6934,6 +6934,9 @@ keys:
                     default_originate:
                       type: dict
                       keys:
+                        enabled:
+                          type: bool
+                          default: true
                         always:
                           type: bool
                     update_source:

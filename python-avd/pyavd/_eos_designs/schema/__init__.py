@@ -35643,12 +35643,14 @@ class EosDesigns(EosDesignsRootModel):
                 class DefaultOriginate(AvdModel):
                     """Subclass of AvdModel."""
 
-                    _fields: ClassVar[dict] = {"always": {"type": bool}}
+                    _fields: ClassVar[dict] = {"enabled": {"type": bool, "default": True}, "always": {"type": bool}}
+                    enabled: bool
+                    """Default value: `True`"""
                     always: bool | None
 
                     if TYPE_CHECKING:
 
-                        def __init__(self, *, always: bool | None | UndefinedType = Undefined) -> None:
+                        def __init__(self, *, enabled: bool | UndefinedType = Undefined, always: bool | None | UndefinedType = Undefined) -> None:
                             """
                             DefaultOriginate.
 
@@ -35656,6 +35658,7 @@ class EosDesigns(EosDesignsRootModel):
                             Subclass of AvdModel.
 
                             Args:
+                                enabled: enabled
                                 always: always
 
                             """
@@ -84994,12 +84997,14 @@ class EosDesigns(EosDesignsRootModel):
                         class DefaultOriginate(AvdModel):
                             """Subclass of AvdModel."""
 
-                            _fields: ClassVar[dict] = {"always": {"type": bool}}
+                            _fields: ClassVar[dict] = {"enabled": {"type": bool, "default": True}, "always": {"type": bool}}
+                            enabled: bool
+                            """Default value: `True`"""
                             always: bool | None
 
                             if TYPE_CHECKING:
 
-                                def __init__(self, *, always: bool | None | UndefinedType = Undefined) -> None:
+                                def __init__(self, *, enabled: bool | UndefinedType = Undefined, always: bool | None | UndefinedType = Undefined) -> None:
                                     """
                                     DefaultOriginate.
 
@@ -85007,6 +85012,7 @@ class EosDesigns(EosDesignsRootModel):
                                     Subclass of AvdModel.
 
                                     Args:
+                                        enabled: enabled
                                         always: always
 
                                     """

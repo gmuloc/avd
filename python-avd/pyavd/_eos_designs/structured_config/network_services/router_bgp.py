@@ -232,7 +232,7 @@ class RouterBgpMixin(Protocol):
                     )
 
                     # Below we recast directly to eos_cli_config_gen. Losing incompatible keys, but relaying everything else.
-                    bgp_peer_config = bgp_peer._cast_as(bgp_vrf.NeighborsItem, ignore_extra_keys=True)
+                    bgp_peer_config = bgp_peer._cast_as(bgp_vrf.NeighborsItem, ignore_extra_keys=True, include_default_values=True)
                     # encrypt password if needed
                     bgp_peer_config.password = self.shared_utils.get_bgp_password(bgp_peer)
 

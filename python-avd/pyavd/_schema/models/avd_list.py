@@ -215,7 +215,7 @@ class AvdList(Sequence[T_ItemType], AvdBase, Generic[T_ItemType]):  # noqa: PLW1
             case "prepend":
                 self._items[:0] = other._items
 
-    def _cast_as(self, new_type: type[T_AvdList], ignore_extra_keys: bool = False) -> T_AvdList:
+    def _cast_as(self, new_type: type[T_AvdList], ignore_extra_keys: bool = False, *, include_default_values: bool = False) -> T_AvdList:
         """
         Recast a class instance as another AvdList subclass if they are compatible.
 
@@ -231,7 +231,9 @@ class AvdList(Sequence[T_ItemType], AvdBase, Generic[T_ItemType]):  # noqa: PLW1
         # In the case that _item_type is Any, issubclass will raise a TypeError.
         if self._item_type is not Any and issubclass(self._item_type, AvdBase):
             items = cast("list[AvdBase]", self._items)
-            return new_type([item._cast_as(new_type._item_type, ignore_extra_keys=ignore_extra_keys) for item in items])
+            return new_type(
+                [item._cast_as(new_type._item_type, ignore_extra_keys=ignore_extra_keys, include_default_values=include_default_values) for item in items]
+            )
 
         if self._item_type != new_type._item_type:
             msg = f"Unable to cast '{cls}' as type '{new_type}' since they have incompatible item types."
