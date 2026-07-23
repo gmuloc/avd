@@ -166,10 +166,10 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: "Install Python requirements"
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           pip install "$WHEEL_FILE" --group dev --upgrade
 
@@ -208,14 +208,14 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install pyavd and Ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           python -m pip install "${{ matrix.ansible_version}}" "$WHEEL_FILE[ansible-collection]" --group molecule
       - name: Run molecule test
@@ -307,14 +307,14 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install pyavd and Ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           python -m pip install "${{ matrix.ansible_version}}" "$WHEEL_FILE[ansible-collection]" --group molecule
       - name: Run molecule test
@@ -342,7 +342,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Use Python 3.10 for minimum requirements
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
@@ -354,14 +354,14 @@ jobs:
         # Need to delete min_requirements afterwards otherwise git status is sad
         # pip upgrade to get dependency groups
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           pip install uv
-          uv pip compile python-avd/pyproject.toml --extra ansible-collection --resolution lowest-direct > /tmp/pyavd/min_requirements.txt
-          cat /tmp/pyavd/min_requirements.txt
+          uv pip compile python-avd/pyproject.toml --extra ansible-collection --resolution lowest-direct > python-avd/dist/min_requirements.txt
+          cat python-avd/dist/min_requirements.txt
           pip install pip --upgrade
           python -m pip install --group molecule
-          python -m pip install "ansible-core==2.16.0" "$WHEEL_FILE[ansible-collection]" -r /tmp/pyavd/min_requirements.txt
+          python -m pip install "ansible-core==2.16.0" "$WHEEL_FILE[ansible-collection]" -r python-avd/dist/min_requirements.txt
       - name: Run molecule test
         working-directory: ansible_collections/arista/avd
         run: |
@@ -403,14 +403,14 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Set up Python ${{ matrix.python_version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install pyavd and Ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           python -m pip install "${{ matrix.ansible_version}}" "$WHEEL_FILE[ansible-collection]" --group molecule
       - name: Run molecule test
@@ -463,10 +463,10 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Install pyavd and Ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           pip install "${{ matrix.pip_installation }}" "$WHEEL_FILE[ansible-collection]"
       - name: Run ansible-test sanity
@@ -491,10 +491,10 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Install pyavd and ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           pip install "ansible-core<2.22.0" "$WHEEL_FILE[ansible-collection]"
       - name: Run ansible-test units
@@ -630,10 +630,10 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pyavd
-          path: /tmp/pyavd/
+          path: python-avd/dist/
       - name: Install Python & Ansible requirements
         env:
-          WHEEL_FILE: /tmp/pyavd/${{ needs.build_pyavd.outputs.wheel_file }}
+          WHEEL_FILE: python-avd/dist/${{ needs.build_pyavd.outputs.wheel_file }}
         run: |
           pip install "$WHEEL_FILE[ansible-collection]" --group dev --upgrade
       - name: Download collection
