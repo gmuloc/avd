@@ -54,7 +54,7 @@ class RouterPathSelectionMixin(Protocol):
 
         output_policy.rules.append_new(
             id=10,
-            application_profile=self.inputs.wan_virtual_topologies.control_plane_virtual_topology.application_profile,
+            application_profile=control_plane_virtual_topology.application_profile,
             load_balance=load_balance_policy.name,
         )
 

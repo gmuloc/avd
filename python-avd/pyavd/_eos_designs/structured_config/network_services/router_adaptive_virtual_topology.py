@@ -62,7 +62,7 @@ class RouterAdaptiveVirtualTopologyMixin(Protocol):
             raise AristaAvdError(msg)
 
         output_policy.matches.append_new(
-            application_profile=self.inputs.wan_virtual_topologies.control_plane_virtual_topology.application_profile,
+            application_profile=control_plane_virtual_topology.application_profile,
             avt_profile=self._wan_control_plane_profile_name,
             traffic_class=control_plane_virtual_topology.traffic_class,
             dscp=control_plane_virtual_topology.dscp,

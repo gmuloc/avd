@@ -211,7 +211,7 @@ class ApplicationTrafficRecognitionMixin(Protocol):
                 - name: APP-CONTROL-PLANE
         """
         application_profile = EosCliConfigGen.ApplicationTrafficRecognition.ApplicationProfilesItem(
-            name=self.inputs.wan_virtual_topologies.control_plane_virtual_topology.application_profile
+            name=self._wan_control_plane_virtual_topology.application_profile
         )
         application_profile.applications.append_new(name=self.DEFAULT_WAN_CONTROL_PLANE_APPLICATION_NAME)
         return application_profile

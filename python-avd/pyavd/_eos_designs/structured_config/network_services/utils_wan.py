@@ -317,8 +317,10 @@ class UtilsWanMixin(Protocol):
 
         The default control_plane_virtual_topology, excluding path_groups with excluded_from_default_policy
         """
-        if self.inputs.wan_virtual_topologies.control_plane_virtual_topology:
-            return self.inputs.wan_virtual_topologies.control_plane_virtual_topology
+        # Use _get() to avoid lazily materializing an empty model. A direct attribute access would make a later call
+        # treat the implicit empty topology as explicitly configured and skip rebuilding the default topology.
+        if control_plane_virtual_topology := self.inputs.wan_virtual_topologies._get("control_plane_virtual_topology"):
+            return control_plane_virtual_topology
 
         path_groups = self._default_policy_path_group_names
         if self.shared_utils.is_wan_client:
