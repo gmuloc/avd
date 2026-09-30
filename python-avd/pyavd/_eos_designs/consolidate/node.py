@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Protocol
 
 from pyavd._eos_designs.schema import EosDesigns as AVDDesign
 from pyavd._errors import AristaAvdInvalidInputsError
-from pyavd._utils import default
+from pyavd._utils.default import default
 
 from .models import ConsolidatedNodeGroup
 

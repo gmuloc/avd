@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Protocol
 from pyavd._eos_cli_config_gen.schema import EosCliConfigGen
 from pyavd._eos_designs.eos_designs_facts.schema import EosDesignsFacts
 from pyavd._errors import AristaAvdError, AristaAvdInvalidInputsError, AristaAvdMissingVariableError
-from pyavd._utils import default
+from pyavd._utils.default import default
 from pyavd._utils.password_utils.password import simple_7_encrypt  # pyright: ignore[reportAttributeAccessIssue]
 from pyavd.api.interface_descriptions import InterfaceDescriptionData
 from pyavd.api.pool_manager import PoolManager
