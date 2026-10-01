@@ -65,7 +65,7 @@ function buildKeyPathPrefixes(keyPath) {
   let acc = "";
   for (const part of parts) {
     acc = acc ? `${acc}.${part}` : part;
-    prefixes.push({ keyPath: acc, label: stripPlaceholderBrackets(part) });
+    prefixes.push({ keyPath: acc.replace(/\[\]$/, ""), label: stripPlaceholderBrackets(part) });
   }
   return prefixes;
 }
@@ -1183,9 +1183,9 @@ function renderReferenceResults(target, db, module, state, inputRows) {
     state.referenceSelectedId = state.currentRowId;
   }
   if (!state.referenceSelectedId || !rowsById.has(state.referenceSelectedId)) {
-    state.referenceSelectedId = schemaRowId(orderedRows[0] || inputRows[0], module);
+    state.referenceSelectedId = schemaRowId(inputRows[0], module);
   }
-  const selected = rowsById.get(state.referenceSelectedId) || orderedRows[0] || inputRows[0];
+  const selected = rowsById.get(state.referenceSelectedId) || inputRows[0];
   state.currentRowId = schemaRowId(selected, module);
   state.referenceSelectedId = state.currentRowId;
 
