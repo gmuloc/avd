@@ -1,0 +1,59 @@
+---
+name: Memory flamegraph diagnostic
+
+"on":
+  push:
+    branches: [ci-benchmark-memory-diagnostic]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  memory:
+    name: AVD memory only, unchanged runtime
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    env:
+      PY_COLORS: 1
+      ANSIBLE_FORCE_COLOR: 1
+      MEMORY_DIAGNOSTIC_OUTPUT: /tmp/avd-memory-diagnostic
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12.16"
+      - name: Install the dependency versions from the previous AVD run
+        run: |
+          pip install --group dev --group benchmark --upgrade --constraint .github/diagnostics/avd-memory-constraints.txt
+          mkdir -p "$MEMORY_DIAGNOSTIC_OUTPUT"
+          pip freeze > "$MEMORY_DIAGNOSTIC_OUTPUT/pip-freeze.txt"
+      - name: Generate PyAVD artifacts
+        run: make -C python-avd dep
+      - name: Run the existing benchmarks in memory mode only
+        uses: CodSpeedHQ/action@af75f77f17a054769abefaa42fe8dc2975469b5f # v5.6.3
+        env:
+          CODSPEED_LOG: debug
+          PYTHONPATH: ${{ github.workspace }}/.github/diagnostics
+        with:
+          mode: memory
+          runner-version: "5.6.3"
+          run: |
+            python -m pytest --codspeed -p codspeed_memory_probe \
+              benchmarks/test_molecule_scenarios.py \
+              benchmarks/test_large_fabric_scaling.py \
+              -m "not benchmark_scale" \
+              -q
+      - name: Retain the completed profiler data
+        if: always()
+        run: python .github/diagnostics/codspeed_memory_probe.py
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: avd-memory-only-diagnostic
+          path: /tmp/avd-memory-diagnostic
+          include-hidden-files: true
+          retention-days: 2
